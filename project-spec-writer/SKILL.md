@@ -53,11 +53,48 @@ Two things you're fishing for:
 - Anything you'd warn another developer about, or a tradeoff you knowingly made?
 - Anything you built that you ended up cutting or that didn't make it in?
 Map the answers onto the sections: framing/purpose → Overview; substance → What I Built and How It Works; pride/voice → Technical Highlights (and the vivid phrasing seeds the whole thing).
- 
+## Frontmatter contract
+
+Return a complete MDX project entry, not only the prose body. The first bytes of every draft must be an opening `---` delimiter followed by valid YAML frontmatter. Missing or malformed frontmatter breaks the Astro content-collection build.
+
+Use this field contract exactly:
+
+| Field | Type | Requirement |
+| --- | --- | --- |
+| `title` | string | Required. Quote the value. |
+| `date` | date | Required. Use `YYYY-MM-DD`. |
+| `category` | enum | Required. Use exactly `freelance`, `work`, or `personal`. |
+| `description` | string | Required. Quote a concise project-card summary. |
+| `stack` | string array | Optional. Include only technologies confirmed by the user or repository. |
+| `thumbnail` | string | Optional. Include only when a path is known. |
+| `liveUrl` | URL string | Optional. Must be a valid absolute URL. |
+| `githubUrl` | URL string | Optional. Must be a valid absolute URL. |
+| `blogSlug` | string | Optional. Include only when the related blog slug is known. |
+| `featured` | boolean | Optional; defaults to `false`. Prefer emitting it explicitly. |
+| `hidden` | boolean | Optional; defaults to `false`. Prefer emitting it explicitly. |
+
+Use this shape:
+
+```yaml
+---
+title: "Project Title"
+date: 2026-01-31
+category: "personal"
+description: "A concise summary used on project cards and in metadata."
+stack: ["TypeScript", "Astro"]
+liveUrl: "https://example.com"
+githubUrl: "https://github.com/example/project"
+blogSlug: "related-post"
+featured: false
+hidden: false
+---
+```
+
+Omit unknown optional fields rather than inventing values. Never omit a required field: ask for it during the interview if it cannot be established from the user's details or the project repository. Keep YAML types intact—booleans are unquoted, arrays are YAML arrays, and URLs are strings. Do not add fields outside this contract.
+
 ## Output structure
- 
-Use this exact set of headers, in this order, as H2 (`##`):
- 
+
+After the frontmatter, use this exact set of headers, in this order, as H2 (`##`):
 ```
 ## Overview
 ## What I Built
@@ -88,29 +125,47 @@ Pick highlights that are genuinely distinctive about *this* project, not generic
 ## Worked example
  
 The following is a complete spec in the target style, for reference.
- 
-**Overview**
- 
+
+```mdx
+---
+title: "Personal Wedding Website"
+date: 2026-03-17
+category: "personal"
+description: "A wedding website and guest management application with custom RSVP flows, admin tooling, and mobile-first reliability for roughly 200 guests."
+stack: ["Next.js", "TypeScript", "Supabase", "Prisma", "Resend", "i18n"]
+githubUrl: "https://github.com/iPior/old-portfolio-website"
+blogSlug: "wedding-website"
+featured: true
+hidden: false
+---
+
+## Overview
+
 This project is a full wedding website and guest management application built for a real event with roughly 200 attendees. It spans the public-facing information site, custom RSVP flows, an authenticated admin dashboard, guest management tooling, and the communication workflows needed to keep the event organized.
- 
-**What I Built**
- 
+
+## What I Built
+
 - The public wedding site experience, including event information architecture, navigation, and RSVP submission flows.
 - The authenticated admin dashboard for managing guests, tracking responses, and supporting wedding-planning operations.
 - The supporting integration layer for auth, data storage, email communication, and production monitoring.
-**How It Works**
- 
+
+## How It Works
+
 - Guests use the public site primarily on mobile to view event details and submit RSVPs through a custom flow designed to be simple and low-friction.
 - Behind the scenes, authenticated admin tools support guest tracking, imports, response management, and outbound email communication for planning and follow-up.
 - The application uses Next.js and Supabase for the app layer, auth, and data handling, with production-minded attention to responsiveness, reliability, and operational visibility.
-**Technical Highlights**
- 
+
+## Technical Highlights
+
 - **Custom RSVP and guest workflows**: The site goes beyond a static event page by supporting structured guest responses and the operational flows needed to manage a live attendee list.
 - **Admin tooling for real event operations**: A private dashboard, guest import tools, and broadcast email capabilities turned the project into a lightweight event management product rather than just a microsite.
 - **Mobile-first reliability**: Because most guests were expected to use the site from their phones, the implementation prioritized mobile UX, responsive performance, testing, and issue monitoring.
+```
+
 ## Workflow
- 
-1. **Interview first.** Read whatever the user gave you, then run the interview above to fill the gaps — in batches, until every section can be written truthfully and in the author's voice. Don't skip to drafting from a thin prompt.
-2. Once the well is full, say so and draft all four sections in order, in the voice above. Reuse the user's own phrasing for the vivid bits.
-3. Return the spec as clean Markdown the user can paste directly into their site. Don't wrap it in commentary unless they ask for notes.
-4. Offer a quick revision pass — the user knows their own voice best, and a line they flag as "corny" is the fastest way to tighten the result.
+
+1. **Interview first.** Read whatever the user gave you, then run the interview above to fill the gaps — in batches, until every section and every required frontmatter field can be written truthfully and in the author's voice. Don't skip to drafting from a thin prompt.
+2. Once the well is full, say so and draft the frontmatter followed by all four sections in order. Reuse the user's own phrasing for the vivid bits.
+3. Validate the draft against the frontmatter contract: opening and closing delimiters are present, all required fields exist, field types are correct, the category is allowed, URLs are absolute, and no value was fabricated.
+4. Return the complete spec as clean MDX the user can paste directly into their site. Do not wrap the final document in a Markdown code fence or commentary unless they ask for notes.
+5. Offer a quick revision pass — the user knows their own voice best, and a line they flag as "corny" is the fastest way to tighten the result.
