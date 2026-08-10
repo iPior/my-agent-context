@@ -2,6 +2,14 @@
 
 A personal collection of skills I use with AI coding assistants.
 
+Install all skills into `~/.agents/skills` with:
+
+```sh
+npx github:iPior/my-agent-skills
+```
+
+Pass one or more skill names to install only those skills.
+
 ## Skills
 
 ### [project-spec-writer](project-spec-writer/)
