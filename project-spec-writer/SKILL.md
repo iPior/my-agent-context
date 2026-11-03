@@ -37,6 +37,7 @@ Two things you're fishing for:
 - What was broken or annoying before it existed — what problem are you actually solving?
 - Who's on the other end using it, and what are they trying to get done?
 - Freelance, work, or personal? Was there a client, a deadline, a real launch?
+- Is it finished, or still in progress? If it's in progress: when did you start, what are the milestones from here to done, which are finished, and what are you working on right now?
 *Substance & scale*
 - What were the main pieces you had to build to make it work?
 - Any real numbers — users, guests, scale, traffic, how long it ran?
@@ -62,7 +63,7 @@ Use this field contract exactly:
 | Field | Type | Requirement |
 | --- | --- | --- |
 | `title` | string | Required. Quote the value. |
-| `date` | date | Required. Use `YYYY-MM-DD`. |
+| `date` | date | Required. Use `YYYY-MM-DD`. For an in-progress project, this is the start date. |
 | `category` | enum | Required. Use exactly `freelance`, `work`, or `personal`. |
 | `description` | string | Required. Quote a concise project-card summary. |
 | `stack` | string array | Optional. Include only technologies confirmed by the user or repository. |
@@ -70,8 +71,13 @@ Use this field contract exactly:
 | `liveUrl` | URL string | Optional. Must be a valid absolute URL. |
 | `githubUrl` | URL string | Optional. Must be a valid absolute URL. |
 | `blogSlug` | string | Optional. Include only when the related blog slug is known. |
-| `featured` | boolean | Optional; defaults to `false`. Prefer emitting it explicitly. |
+| `featured` | boolean | Optional; defaults to `false`. Prefer emitting it explicitly. Must be `false` when `status` is `in-progress`. |
+| `featuredOrder` | positive integer | Optional. Position in Featured work (1 = first). Only allowed when `featured: true`. |
+| `featuredSize` | enum | Optional. `large` or `small`. Only allowed when `featured: true`. |
+| `depth` | enum | Optional; defaults to `full`. `short` marks a brief "project notes" entry. |
 | `hidden` | boolean | Optional; defaults to `false`. Prefer emitting it explicitly. |
+| `status` | enum | Optional; defaults to `shipped`. Use exactly `shipped` or `in-progress`. Prefer emitting it explicitly. |
+| `progress` | object | Required when `status` is `in-progress`; omit for shipped projects. See below. |
 
 Use this shape:
 
@@ -92,6 +98,45 @@ hidden: false
 
 Omit unknown optional fields rather than inventing values. Never omit a required field: ask for it during the interview if it cannot be established from the user's details or the project repository. Keep YAML types intact—booleans are unquoted, arrays are YAML arrays, and URLs are strings. Do not add fields outside this contract.
 
+### In-progress projects
+
+An in-progress project appears in the homepage "currently building" section, with a "Now:" line and a milestone bar. It needs `status: "in-progress"` and a `progress` block:
+
+| Field | Type | Requirement |
+| --- | --- | --- |
+| `progress.focus` | string | Required. One sentence on what is being worked on right now. Quote it. Shown after "Now:". |
+| `progress.updated` | date | Required. `YYYY-MM-DD` of the last real progress. After 30 days without an update, the site shows the project as paused. |
+| `progress.milestones` | array | Required, at least one. Ordered steps from start to done. |
+| `progress.milestones[].label` | string | Required. Short noun phrase, e.g. "Log aggregation". |
+| `progress.milestones[].done` | boolean | Optional; defaults to `false`. Emit `done: true` only on finished milestones. |
+
+```yaml
+---
+title: "Homelab Observability Stack"
+date: 2026-08-12
+category: "personal"
+description: "Metrics, logs, and alerting for every service on my home server."
+stack: ["Docker", "Linux"]
+featured: false
+hidden: false
+status: "in-progress"
+progress:
+  focus: "Shipping container logs into Loki without letting retention fill the disk."
+  updated: 2026-11-01
+  milestones:
+    - label: "Metrics collection"
+      done: true
+    - label: "Log aggregation"
+    - label: "Alerting rules"
+---
+```
+
+Rules:
+- The first milestone not marked done is shown as the current one, so list milestones in the order they will be done and keep `focus` consistent with it.
+- Write each milestone in the two-line form above. In the inline form, `{label: "X", done:true}` without a space after the colon silently parses as not done.
+- Milestones and `focus` come from the user. Never invent a roadmap. Ask what the steps to done are.
+- When a project ships, set `status: "shipped"` and remove the `progress` block (the site ignores it if left in place).
+
 ## Output structure
 
 After the frontmatter, use this exact set of headers, in this order, as H2 (`##`):
@@ -102,6 +147,8 @@ After the frontmatter, use this exact set of headers, in this order, as H2 (`##`
 ## Technical Highlights
 ```
  
+For an in-progress project, keep the same four headers but write only what is true today: What I Built lists completed work only, How It Works describes the design and labels anything not built yet as planned, and Technical Highlights may cover the hard problems being worked on. Keep it shorter than a shipped spec. The goal is a page worth clicking from the homepage: what it is, why it's being built, the hard part, and what done looks like.
+
 ### Overview
 2–3 sentences. Cover what the project is, who or what it serves, and the scope of the work. Keep it practical and technical, not reflective.
  
@@ -166,6 +213,6 @@ This project is a full wedding website and guest management application built fo
 
 1. **Interview first.** Read whatever the user gave you, then run the interview above to fill the gaps — in batches, until every section and every required frontmatter field can be written truthfully and in the author's voice. Don't skip to drafting from a thin prompt.
 2. Once the well is full, say so and draft the frontmatter followed by all four sections in order. Reuse the user's own phrasing for the vivid bits.
-3. Validate the draft against the frontmatter contract: opening and closing delimiters are present, all required fields exist, field types are correct, the category is allowed, URLs are absolute, and no value was fabricated.
+3. Validate the draft against the frontmatter contract: opening and closing delimiters are present, all required fields exist, field types are correct, the category is allowed, URLs are absolute, and no value was fabricated. For in-progress projects, also check that `progress` is present with `focus`, `updated` and at least one milestone, and that `featured` is `false`.
 4. Return the complete spec as clean MDX the user can paste directly into their site. Do not wrap the final document in a Markdown code fence or commentary unless they ask for notes.
 5. Offer a quick revision pass — the user knows their own voice best, and a line they flag as "corny" is the fastest way to tighten the result.
