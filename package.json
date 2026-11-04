@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Personal agent skills, installable into ~/.agents/skills via npx",
   "type": "module",
+  "scripts": {
+    "install:global": "node bin/install.mjs --global-only"
+  },
   "bin": {
     "my-agent-skills": "bin/install.mjs"
   },
