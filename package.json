@@ -1,13 +1,15 @@
 {
   "name": "my-agent-context",
   "version": "0.1.0",
-  "description": "Personal agent skills, installable into ~/.agents/skills via npx",
+  "description": "Personal agent skills and shared global instructions with separate installers",
   "type": "module",
   "scripts": {
-    "install:global": "node bin/install.mjs --global-only"
+    "install:global": "node bin/install-agent-context.mjs",
+    "install:skills": "node bin/install-skills.mjs"
   },
   "bin": {
-    "my-agent-context": "bin/install.mjs"
+    "install-skills": "bin/install-skills.mjs",
+    "install-agent-context": "bin/install-agent-context.mjs"
   },
   "engines": {
     "node": ">=16.7"

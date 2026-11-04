@@ -1,8 +1,8 @@
 # My Agentic Context
 
-My shared context for AI agents: reusable skills, global instructions, and the
-setup that makes them available across Claude Code and Codex. This repo is a
-home for the preferences and workflows I want agents to carry between projects.
+My shared context for AI agents: reusable skills, global instructions, and two
+independent installers for Claude Code and Codex. This repo is a home for the
+preferences and workflows I want agents to carry between projects.
 
 - [`skills/`](skills/): skills for specific tasks and workflows.
 - [`global/AGENTS.md`](global/AGENTS.md): personal instructions shared across projects.
@@ -13,32 +13,38 @@ home for the preferences and workflows I want agents to carry between projects.
 Install all skills into `~/.agents/skills`:
 
 ```sh
-npx github:iPior/my-agent-context
+npx --package=github:iPior/my-agent-context install-skills --all
 ```
 
 Or install specific skills by name:
 
 ```sh
-npx github:iPior/my-agent-context blog-writer project-spec-writer
+npx --package=github:iPior/my-agent-context install-skills blog-writer project-spec-writer
 ```
 
 List available skills without installing anything:
 
 ```sh
-npx github:iPior/my-agent-context --list
+npx --package=github:iPior/my-agent-context install-skills --list
 ```
 
-Skill installs also install the global `AGENTS.md` instructions described below
-and prompt you to select your agents. For a non-interactive install, pass
-`--claude`, `--codex`, or both. Use `--no-providers` to leave provider links alone.
+Skill installs only install skills. They do not install or update `AGENTS.md`,
+change provider links, or prompt for providers. The same commands work in
+non-interactive environments. Running `install-skills` without arguments shows
+help; use skill names or `--all` to install. From a local clone, run
+`npm run install:skills -- --all` or pass skill names instead.
 
 ## Installing AGENTS.md
 
 Install only the global instructions, without installing skills:
 
 ```sh
-npx github:iPior/my-agent-context --global-only
+npx --package=github:iPior/my-agent-context install-agent-context
 ```
+
+This copies `global/AGENTS.md` to `~/.agents/AGENTS.md` and asks which providers
+to link. This command only installs instructions; skill installation is handled
+by the separate `install-skills` command.
 
 It creates symlinks for the providers you select:
 
@@ -50,8 +56,11 @@ It creates symlinks for the providers you select:
 For a non-interactive install, select providers explicitly:
 
 ```sh
-npx github:iPior/my-agent-context --global-only --claude --codex
+npx --package=github:iPior/my-agent-context install-agent-context --claude --codex
 ```
+
+Use `--no-providers` to install the shared file without changing
+provider links.
 
 From a local clone, you can also run:
 
