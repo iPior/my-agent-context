@@ -28,12 +28,6 @@ List available skills without installing anything:
 npx --package=github:iPior/my-agent-context install-skills --list
 ```
 
-Skill installs only install skills. They do not install or update `AGENTS.md`,
-change provider links, or prompt for providers. The same commands work in
-non-interactive environments. Running `install-skills` without arguments shows
-help; use skill names or `--all` to install. From a local clone, run
-`npm run install:skills -- --all` or pass skill names instead.
-
 ## Installing AGENTS.md
 
 Install only the global instructions, without installing skills:
@@ -61,12 +55,6 @@ npx --package=github:iPior/my-agent-context install-agent-context --claude --cod
 
 Use `--no-providers` to install the shared file without changing
 provider links.
-
-From a local clone, you can also run:
-
-```sh
-npm run install:global
-```
 
 The installed copy stays available even if the repo or an `npx` cache is removed.
 Existing files or different symlinks are preserved as `.backup`, `.backup.1`, etc.
