@@ -94,6 +94,22 @@ Trigger it with requests like "write a spec for my X project", "help me write th
 
 See [SKILL.md](skills/project-spec-writer/SKILL.md) for the full instructions.
 
+### [in-progress-project-spec-writer](skills/in-progress-project-spec-writer/)
+
+Captures an in-progress project for my personal site without starting the write-up.
+It gathers relevant repository context, asks for missing metadata, and produces
+only MDX frontmatter: project details, confirmed stack and links, current focus,
+and milestones. There are no prose sections or placeholder body content.
+
+Trigger it with requests like "capture this repo as an in-progress project" or
+"fill out the project frontmatter without writing the spec yet".
+
+```sh
+npx github:iPior/my-agent-skills in-progress-project-spec-writer
+```
+
+See [SKILL.md](skills/in-progress-project-spec-writer/SKILL.md) for the full instructions.
+
 ### [blog-writer](skills/blog-writer/)
 
 The companion to `project-spec-writer`. Where the spec is the terse technical summary, this skill writes the longer, first-person, narrative blog post for the author's personal site - telling the story behind a build: why it happened, what was hard, what got learned, and what he'd do differently. It outputs a finished `.mdx` file with a strict frontmatter contract and a default section skeleton (Overview, Goals, Technologies Used, Backstory, What I Learned, What I Would Do Differently).

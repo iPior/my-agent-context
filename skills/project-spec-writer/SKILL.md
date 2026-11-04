@@ -1,6 +1,6 @@
 ---
 name: project-spec-writer
-description: Use this skill whenever the user wants to write, draft, or revise a project spec, project write-up, portfolio entry, or "projects page" description for software work they built. Trigger it for requests like "write a spec for my X project", "help me write this up for my portfolio", "draft a project description", or when the user pastes details about something they built and wants it turned into a structured write-up. Use it even if they never say the word "spec" — any time the deliverable is a portfolio-style description of a software project, this applies.
+description: Use this skill whenever the user wants to write, draft, or revise a project spec, project write-up, portfolio entry, or "projects page" description for software work they built. Trigger it for requests like "write a spec for my X project", "help me write this up for my portfolio", "draft a project description", or when the user pastes details about something they built and wants it turned into a structured write-up. Use it even if they never say the word "spec" — any time the deliverable is a portfolio-style description of a software project, this applies. For in-progress entries where the user wants only frontmatter and no write-up, use in-progress-project-spec-writer instead.
 ---
  
 # Project Spec Writer
