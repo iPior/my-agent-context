@@ -13,20 +13,20 @@ home for the preferences and workflows I want agents to carry between projects.
 Install all skills into `~/.agents/skills`:
 
 ```sh
-npx github:iPior/my-agent-skills
+npx github:iPior/my-agent-context
 ```
 
 Or install specific skills by name:
 
 ```sh
-npx github:iPior/my-agent-skills blog-writer
-npx github:iPior/my-agent-skills blog-writer project-spec-writer
+npx github:iPior/my-agent-context blog-writer
+npx github:iPior/my-agent-context blog-writer project-spec-writer
 ```
 
 List available skills without installing anything:
 
 ```sh
-npx github:iPior/my-agent-skills --list
+npx github:iPior/my-agent-context --list
 ```
 
 Skill installs also install the global `AGENTS.md` instructions described below
@@ -41,7 +41,7 @@ automatically. Rerun the installer to update installed skills.
 Install only the global instructions, without installing skills:
 
 ```sh
-npx github:iPior/my-agent-skills --global-only
+npx github:iPior/my-agent-context --global-only
 ```
 
 The installer copies [global/AGENTS.md](global/AGENTS.md) to
@@ -65,7 +65,7 @@ still installs the shared file.
 For a non-interactive install, select providers explicitly:
 
 ```sh
-npx github:iPior/my-agent-skills --global-only --claude --codex
+npx github:iPior/my-agent-context --global-only --claude --codex
 ```
 
 From a local clone, you can also run:
@@ -105,7 +105,7 @@ Trigger it with requests like "capture this repo as an in-progress project" or
 "fill out the project frontmatter without writing the spec yet".
 
 ```sh
-npx github:iPior/my-agent-skills in-progress-project-spec-writer
+npx github:iPior/my-agent-context in-progress-project-spec-writer
 ```
 
 See [SKILL.md](skills/in-progress-project-spec-writer/SKILL.md) for the full instructions.

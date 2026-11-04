@@ -23,10 +23,10 @@ function discoverSkills() {
 function printHelp(skills) {
   process.stdout.write(
     [
-      "my-agent-skills - install personal agent skills and instructions",
+      "my-agent-context - install personal agent skills and instructions",
       "",
       "Usage:",
-      "  npx github:iPior/my-agent-skills [skills...] [options]",
+      "  npx github:iPior/my-agent-context [skills...] [options]",
       "",
       "Options:",
       "  --list, -l      List available skills and exit",
@@ -40,9 +40,9 @@ function printHelp(skills) {
       "Prompts for providers unless --claude, --codex, or --no-providers is supplied.",
       "Non-interactive installs must supply one of those flags.",
       "Examples:",
-      "  npx github:iPior/my-agent-skills",
-      "  npx github:iPior/my-agent-skills blog-writer",
-      "  npx github:iPior/my-agent-skills --claude --codex",
+      "  npx github:iPior/my-agent-context",
+      "  npx github:iPior/my-agent-context blog-writer",
+      "  npx github:iPior/my-agent-context --claude --codex",
       "",
       `Available skills: ${skills.map((s) => s.name).join(", ") || "(none)"}`
     ].join("\n") + "\n"
