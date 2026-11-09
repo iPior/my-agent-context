@@ -1,0 +1,7 @@
+interface:
+  display_name: "Factory Plan"
+  short_description: "Agree on scope and verifiable acceptance criteria"
+  default_prompt: "Use $factory-plan to inspect this project and prepare a plan for approval."
+
+policy:
+  allow_implicit_invocation: false

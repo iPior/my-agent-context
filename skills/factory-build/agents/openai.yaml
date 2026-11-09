@@ -1,0 +1,7 @@
+interface:
+  display_name: "Factory Build"
+  short_description: "Implement and verify an approved factory task"
+  default_prompt: "Use $factory-build to implement the approved task in its assigned worktree."
+
+policy:
+  allow_implicit_invocation: false
