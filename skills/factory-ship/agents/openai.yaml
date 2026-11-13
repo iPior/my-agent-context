@@ -1,0 +1,7 @@
+interface:
+  display_name: "Factory Ship"
+  short_description: "Prepare a reviewed PR and report its CI results"
+  default_prompt: "Use $factory-ship to prepare the reviewed candidate for a pull request."
+
+policy:
+  allow_implicit_invocation: false

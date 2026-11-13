@@ -1,0 +1,7 @@
+interface:
+  display_name: "Factory Review"
+  short_description: "Independently review a factory candidate commit"
+  default_prompt: "Use $factory-review to verify this candidate against the approved requirements."
+
+policy:
+  allow_implicit_invocation: false

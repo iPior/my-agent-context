@@ -1,0 +1,7 @@
+interface:
+  display_name: "Factory Workflow"
+  short_description: "Coordinate a development task through review"
+  default_prompt: "Use $factory-workflow to plan and coordinate a development task through a reviewed PR."
+
+policy:
+  allow_implicit_invocation: false
