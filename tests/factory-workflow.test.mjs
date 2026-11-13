@@ -138,7 +138,7 @@ try {
     os.homedir = () => isolatedHome;
     process.argv = [process.execPath, process.argv[2], ...process.argv.slice(3)];
     await import(pathToFileURL(process.argv[1]));`;
-  const installed = spawnSync(process.execPath, ["--input-type=module", "-e", installCode, fakeHome, installer, ...skills], { encoding: "utf8" });
+  const installed = spawnSync(process.execPath, ["--input-type=module", "-e", installCode, fakeHome, installer, "--no-providers", ...skills], { encoding: "utf8" });
   assert.equal(installed.status, 0, installed.stderr);
   for (const name of skills) {
     const source = path.join(ROOT, "skills", name);
