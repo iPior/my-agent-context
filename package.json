@@ -4,7 +4,7 @@
   "description": "Personal agent skills and shared global instructions with separate installers",
   "type": "module",
   "scripts": {
-    "test": "node tests/factory-workflow.test.mjs",
+    "test": "node tests/factory-workflow.test.mjs && node tests/install-skills.test.mjs",
     "install:global": "node bin/install-agent-context.mjs",
     "install:skills": "node bin/install-skills.mjs"
   },

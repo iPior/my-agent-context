@@ -10,11 +10,36 @@ preferences and workflows I want agents to carry between projects.
 
 ## Installing skills
 
-Install all skills into `~/.agents/skills`:
+Install all skills into `~/.agents/skills` and choose which harnesses should use them:
 
 ```sh
 npx --package=github:iPior/my-agent-context install-skills --all
 ```
+
+The installer asks for **Claude Code**, **Codex**, **Both**, or **Neither** (shared
+skills only). Skills and all bundled files stay in `~/.agents/skills`; selected
+harnesses receive directory symlinks to that shared folder:
+
+| Harness | Symlink | Target |
+| --- | --- | --- |
+| Claude Code | `~/.claude/skills` | `~/.agents/skills` |
+| Codex | `~/.codex/skills` | `~/.agents/skills` |
+
+`CODEX_HOME`, when set, replaces `~/.codex` for the Codex link. Existing paths are
+preserved as `.backup`, `.backup.1`, etc.; correct links are left alone. Skills in
+a backed-up harness folder remain in the backup. Move any you want to keep active
+into `~/.agents/skills`. The installer does not replace the whole shared folder
+or change harness settings, global instructions, or unselected harness links.
+
+For a non-interactive install, choose harnesses explicitly:
+
+```sh
+npx --package=github:iPior/my-agent-context install-skills --claude --codex --all
+```
+
+Use `--claude` or `--codex` for one harness, or `--no-providers` to install only
+the shared skills without changing harness links. Without these flags, an install
+requires an interactive terminal. `--list` and `--help` do not prompt or install.
 
 Or install specific skills by name:
 
@@ -87,8 +112,8 @@ After installing, explicitly request `factory-workflow` in your harness, for
 example: "Use factory-workflow to add recipe importing to this repository. Work
 with me on the plan first, then prepare a draft PR." Use your harness's explicit
 skill syntax when available. Confirm it can discover the installed skills; the
-installer copies them to `~/.agents/skills` and does not configure provider skill
-discovery or delegation permissions.
+installer copies them to `~/.agents/skills` and links the harnesses you select.
+It does not configure delegation permissions.
 
 The main chat remains the coordinator. It loads the scoped
 [coordinator contract](skills/factory-workflow/references/coordinator.md), passes
@@ -111,7 +136,7 @@ is included. Tmux can preserve a process, but after an exit the next coordinator
 must reconcile saved records with live Git and PR state. No runtime run data
 belongs in this repository or the target project's commits.
 
-Run the local helper and packaging checks with `npm test`. This does not call a
+Run the local helper, packaging, and installer checks with `npm test`. This does not call a
 model, contact GitHub, install skills in your real home, or change provider config.
 
 ### [project-spec-writer](skills/project-spec-writer/)
