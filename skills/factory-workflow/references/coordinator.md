@@ -56,8 +56,10 @@ tmux management, remote workers, or automatic wake-up after a session exits.
 ## Real-browser verification
 
 For browser-facing tasks, confirm before planning ends that workers can start
-the application and drive a real browser, and how they sign in. Builder and
-reviewer each run the check; the reviewer's run is independent evidence. Only
+the application and drive a real browser, and how they sign in. The builder
+writes and runs the end-to-end check. The reviewer re-runs it and separately
+explores the application with its own browser session; both passes are
+required for independent evidence. Only
 the user can waive it, as a recorded proposal in the approved task. Report a
 waived or unavailable browser check prominently in the final report, apart
 from checks that passed.

@@ -45,12 +45,24 @@ probe tests, scripts, and mutation checks outside the task worktree:
 
 ## Exercise user-facing behavior
 
-When the candidate changes what users see in a browser, drive the running
-application yourself in a real browser, headless is fine, through each
-user-facing criterion and the failure states. Do not rely on the builder's
-screenshots or on simulated-DOM tests. Use a disposable database and the
-planned sign-in method; never a development or production database. Save your
-own screenshots under the evidence directory and list what you exercised.
+When the candidate changes what users see in a browser, do both of these in a
+real browser, headless is fine, against the running application:
+
+1. Re-run the committed end-to-end test on the candidate, and read it: check
+   that it asserts the criteria rather than only that pages load. Running it
+   proves only what the builder chose to test.
+2. Explore on your own with a short scripted browser session the builder did
+   not write. Cover each user-facing criterion and failure state, then try what
+   the test skips: keyboard-only use and focus, repeated and rapid actions,
+   reload and back navigation mid-flow, long or unusual input, a narrow
+   viewport, and console or network errors.
+
+Do not rely on the builder's screenshots or on simulated-DOM tests. Use a
+disposable database and the planned sign-in method; never a development or
+production database. Keep exploratory scripts outside the task worktree. Save
+your own screenshots under the evidence directory, and list in the handoff
+what each of the two passes exercised and what it did not. A defect found only
+by exploring is a finding; recommend adding it to the committed test.
 
 If you cannot run a browser or sign in, and the approved task does not record
 the user's acceptance of that gap, the criterion is unverified: return

@@ -48,7 +48,9 @@ user-facing criterion. Component tests in a simulated DOM do not replace it:
 they cannot show focus, layout, navigation, or a real sign-in. Decide how the
 check signs in without the user, for example a fixture identity provider or a
 test session against a disposable database, and whether it becomes a committed
-test that CI runs. If no browser can run here, or sign-in cannot be automated,
+test that CI runs. The builder writes and runs that
+check; the reviewer re-runs it and also explores the application independently.
+Planning runs nothing. If no browser can run here, or sign-in cannot be automated,
 say so before approval and make skipping it an explicit proposal for the user,
 never a silent limit.
 
