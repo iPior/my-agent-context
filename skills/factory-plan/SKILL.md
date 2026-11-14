@@ -15,6 +15,15 @@ and applicable project instructions. Inspect the relevant implementation, tests,
 build commands, and repository state. If invoked without a run, return a proposed
 plan only; do not invent paths or claim a factory run exists.
 
+Find what a worker needs in a clean worktree, since ignored files such as local
+environment files and installed dependencies are absent there: install commands,
+credentials that must come from the environment, variables that setup, build,
+or generation commands require, and services tests start. Compare the local
+toolchain with the versions the project and CI declare. When the approach adds
+or changes dependencies, plan a check of the lockfile diff and of what reaches
+the production install or image. Note the user's standing rules, such as
+attribution and writing style, so they reach every worker.
+
 Reuse decisions already made. Ask only about uncertainty that changes what gets
 built, the approach, or how success will be judged. Label proposals and
 assumptions; do not convert them into user requirements.
@@ -27,6 +36,8 @@ Fill the task template with:
 - The resulting behavior, affected components, and chosen approach.
 - Explicit acceptance criteria with stable IDs such as AC-1 and AC-2.
 - Scope boundaries, constraints, and decisions the user needs to make.
+- Setup and environment prerequisites, toolchain differences from CI, and the
+  standing rules workers must follow.
 - A verification plan connecting each criterion to a test, reproduction, UI
   walkthrough, or other observable evidence. Include regression checks.
 - The proposed base ref and known pre-existing failures or setup needs.
@@ -37,6 +48,12 @@ the fix; for a feature, define observable success. Do not force a failing test
 where a screenshot, manual check, or another form of evidence is more appropriate.
 
 ## Obtain approval once
+
+The approved file is hashed, so it cannot hold open questions. Record what the
+user already decided separately from your own recommendations, and write each
+recommendation as a numbered proposal (D-1, D-2) that is accepted if the plan
+is approved as written. Present those proposals as the decisions to make. If
+the user changes one, edit the task before recording approval.
 
 Present the completed plan and acceptance criteria. Wait for an explicit answer.
 If the user has already explicitly approved this concrete plan in the current

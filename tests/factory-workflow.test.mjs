@@ -52,6 +52,9 @@ try {
   assert.equal(initial.publication_authorized, false);
   assert.equal(fs.existsSync(initial.worktree_path), false);
   assert.equal(git("status", "--porcelain"), mainStatus);
+  assert.deepEqual(initial.warnings, []);
+  assert.match(fs.readFileSync(path.join(run, "friction.md"), "utf8"), /friction log/);
+  assert.equal(Object.prototype.hasOwnProperty.call(read(), "warnings"), false);
   helper(["init", "--repo", repo, "--id", "change", "--base", "HEAD", "--root", runRoot], /exist/i);
   assert.equal(read().revision, 0);
 
@@ -128,6 +131,37 @@ try {
   assert.equal(read().candidate_sha, repaired);
   assert.equal(git("status", "--porcelain"), mainStatus);
   assert.equal(git("rev-parse", "HEAD"), base);
+
+  // A local base branch behind its upstream is reported, never fetched or moved.
+  const clone = path.join(temporary, "stale clone");
+  execFileSync("git", ["clone", "-q", repo, clone], { stdio: "pipe" });
+  const cloneBranch = execFileSync("git", ["-C", clone, "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8" }).trim();
+  fs.writeFileSync(path.join(repo, "app.txt"), "upstream moved\n");
+  git("commit", "-qam", "Upstream change");
+  execFileSync("git", ["-C", clone, "fetch", "-q", "origin"], { stdio: "pipe" });
+  const stale = spawnSync(process.execPath, [HELPER, "init", "--repo", clone, "--id", "stale", "--base", cloneBranch, "--root", runRoot], { encoding: "utf8" });
+  assert.equal(stale.status, 0, stale.stderr);
+  assert.match(stale.stderr, /differs from its upstream/);
+  assert.equal(JSON.parse(stale.stdout).warnings.length, 1);
+  assert.equal(JSON.parse(stale.stdout).initial_base_sha, base);
+  const fresh = spawnSync(process.execPath, [HELPER, "init", "--repo", clone, "--id", "fresh", "--base", `origin/${cloneBranch}`, "--root", runRoot], { encoding: "utf8" });
+  assert.equal(fresh.status, 0, fresh.stderr);
+  assert.deepEqual(JSON.parse(fresh.stdout).warnings, []);
+  git("reset", "-q", "--hard", base);
+  checks++;
+
+  // Every template a contract names must ship, with a friction slot in each handoff.
+  const assets = path.join(ROOT, "skills/factory-workflow/assets");
+  for (const name of ["task.md", "dispatch.md", "baseline.md", "build.md", "review.md", "ship.md", "friction.md"]) {
+    assert.ok(fs.existsSync(path.join(assets, name)), `Missing template: ${name}`);
+  }
+  for (const name of ["build.md", "review.md", "ship.md"]) {
+    assert.match(fs.readFileSync(path.join(assets, name), "utf8"), /## Workflow friction/);
+  }
+  for (const name of ["task.md", "dispatch.md"]) {
+    assert.match(fs.readFileSync(path.join(assets, name), "utf8"), /Standing rules/);
+  }
+  checks++;
 
   // Exercise the real installer with an isolated homedir implementation, never
   // overriding HOME or touching a provider configuration in the real home.

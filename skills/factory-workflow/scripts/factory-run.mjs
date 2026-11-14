@@ -118,6 +118,18 @@ function validate(next, directory, previous) {
   }
 }
 
+// Local only: the helper never fetches, so a remote-tracking ref is as fresh as
+// the caller's last fetch. This catches a local branch behind its upstream.
+function baseWarnings(repo, base, baseSha) {
+  try {
+    const upstream = git(repo, "rev-parse", "--abbrev-ref", `${base}@{upstream}`);
+    if (git(repo, "rev-parse", "--verify", `${upstream}^{commit}`) !== baseSha) {
+      return [`Base ${base} differs from its upstream ${upstream}; fetch and pin the intended ref deliberately`];
+    }
+  } catch { /* No upstream: nothing to compare. */ }
+  return [];
+}
+
 function initialize(args) {
   const opts = options(args, ["--repo", "--id", "--base", "--root"]);
   const repo = fs.realpathSync(git(path.resolve(requireValue(opts.repo, "--repo")), "rev-parse", "--show-toplevel"));
@@ -140,7 +152,9 @@ function initialize(args) {
   fs.mkdirSync(path.dirname(directory), { recursive: true, mode: 0o700 });
   fs.mkdirSync(directory, { mode: 0o700 }); // Exclusive: never overwrite an existing run.
   fs.mkdirSync(path.join(directory, "evidence"), { mode: 0o700 });
-  fs.copyFileSync(path.join(SKILL, "assets", "task.md"), path.join(directory, "task.md"), fs.constants.COPYFILE_EXCL);
+  for (const name of ["task.md", "friction.md"]) {
+    fs.copyFileSync(path.join(SKILL, "assets", name), path.join(directory, name), fs.constants.COPYFILE_EXCL);
+  }
   const status = {
     schema_version: 1, revision: 0, run_id: id, repo_key: repoKey, repo_path: repo,
     base_ref: base, initial_base_sha: baseSha, comparison_base_sha: baseSha,
@@ -156,7 +170,9 @@ function initialize(args) {
     updated_at: new Date().toISOString(),
   };
   atomicJson(path.join(directory, "status.json"), status);
-  process.stdout.write(`${JSON.stringify({ run_dir: directory, ...status }, null, 2)}\n`);
+  const warnings = baseWarnings(repo, base, baseSha);
+  for (const warning of warnings) console.error(`factory-run: warning: ${warning}`);
+  process.stdout.write(`${JSON.stringify({ run_dir: directory, warnings, ...status }, null, 2)}\n`);
 }
 
 function mutate(command, args) {
