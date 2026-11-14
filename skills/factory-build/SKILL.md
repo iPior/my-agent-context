@@ -37,6 +37,9 @@ reconstruct accepted requirements from a summary or create new run state.
 3. Run checks appropriate to the change: relevant tests, type checks, lint,
    builds, and runtime/UI checks as needed. Map evidence to acceptance IDs.
    Passing a build alone does not demonstrate behavioral completion.
+   For browser-facing changes, run the planned real-browser check against the
+   running application and save screenshots or traces per criterion. A
+   simulated-DOM test is not that check.
 4. Compare before and after using the same meaningful scenario where possible.
    Save commands, exit results, and relevant screenshots/logs under the assigned
    evidence directory. Explain checks that could not run.

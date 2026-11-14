@@ -43,6 +43,19 @@ probe tests, scripts, and mutation checks outside the task worktree:
 - Running the project's checks in the task worktree is fine. Ignored build
   outputs may change; `git status` must be clean when you finish.
 
+## Exercise user-facing behavior
+
+When the candidate changes what users see in a browser, drive the running
+application yourself in a real browser, headless is fine, through each
+user-facing criterion and the failure states. Do not rely on the builder's
+screenshots or on simulated-DOM tests. Use a disposable database and the
+planned sign-in method; never a development or production database. Save your
+own screenshots under the evidence directory and list what you exercised.
+
+If you cannot run a browser or sign in, and the approved task does not record
+the user's acceptance of that gap, the criterion is unverified: return
+`blocked` naming the missing capability rather than `pass` with a limitation.
+
 ## Decide the verdict
 
 A finding blocks when the candidate fails an acceptance criterion, breaks a

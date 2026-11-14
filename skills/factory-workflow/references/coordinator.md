@@ -53,6 +53,15 @@ Native subagents in one chosen harness are the initial implementation. These
 skills do not implement mixed-provider adapters, worker scheduling, daemons,
 tmux management, remote workers, or automatic wake-up after a session exits.
 
+## Real-browser verification
+
+For browser-facing tasks, confirm before planning ends that workers can start
+the application and drive a real browser, and how they sign in. Builder and
+reviewer each run the check; the reviewer's run is independent evidence. Only
+the user can waive it, as a recorded proposal in the approved task. Report a
+waived or unavailable browser check prominently in the final report, apart
+from checks that passed.
+
 ## Triage findings
 
 Decide every review finding by ID in the repair dispatch: fix, fix if simple,

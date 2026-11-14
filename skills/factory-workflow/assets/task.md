@@ -30,6 +30,11 @@ when it does not connect, and local toolchain versions that differ from CI.
 | --- | --- | --- | --- |
 | AC-1 | {{BASELINE}} | {{PROOF}} | {{REGRESSION}} |
 
+Real-browser check for user-facing criteria (how the application is started,
+how sign-in is automated, who runs it), or the user's recorded waiver:
+
+{{BROWSER_CHECK_PLAN_OR_NOT_USER_FACING_OR_USER_WAIVER}}
+
 ## Decisions and assumptions
 
 Decided by the user:

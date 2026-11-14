@@ -42,6 +42,16 @@ Fill the task template with:
   walkthrough, or other observable evidence. Include regression checks.
 - The proposed base ref and known pre-existing failures or setup needs.
 
+For a change users see in a browser, plan an end-to-end check in a real
+browser, headless is fine, that drives the running application through each
+user-facing criterion. Component tests in a simulated DOM do not replace it:
+they cannot show focus, layout, navigation, or a real sign-in. Decide how the
+check signs in without the user, for example a fixture identity provider or a
+test session against a disposable database, and whether it becomes a committed
+test that CI runs. If no browser can run here, or sign-in cannot be automated,
+say so before approval and make skipping it an explicit proposal for the user,
+never a silent limit.
+
 Keep the review summary to one screen when practical. Do not require approval
 of routine file-by-file edits. For a bug, plan a concrete reproduction before
 the fix; for a feature, define observable success. Do not force a failing test
