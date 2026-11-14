@@ -124,11 +124,28 @@ Templates, a dependency-free Node.js/Git status helper, and the
 [handoff/resume contract](skills/factory-workflow/references/run-contract.md) ship
 inside `factory-workflow` and are copied by the existing installer.
 
+Each run also keeps a `friction.md` log, and every worker handoff has a workflow
+friction section. The coordinator reports them at the end of a run but never
+edits installed skills mid-run. Fix friction here, in the source repository, then
+reinstall. To test local edits before pushing, run the installer from a checkout;
+it replaces each named skill's installed folder with the checkout's copy:
+
+```sh
+node bin/install-skills.mjs --claude factory-workflow factory-plan factory-build factory-review factory-ship
+```
+
+The stage skills are plain instructions, not registered agent types. In a harness
+without dedicated worker types, the coordinator starts general-purpose subagents
+and passes each stage skill's path in the dispatch.
+
 Start with native subagents in one supported harness. Verify independent reviewer
 context and access to both worktree and run directory before dispatch. If a
 capability is missing, stop for an explicit manual handoff rather than claiming
 the automated step ran. Three automatic repair rounds are allowed across review
-and CI combined. Every code repair returns through verification and fresh review.
+and CI combined. Every code repair returns through verification and fresh review;
+a re-review covers the repair and its regressions unless the coordinator asks for
+the full candidate. A passing review may carry nonblocking findings, which the
+coordinator either repairs or lists as follow-ups in the PR.
 
 These skills provide a session-driven workflow, not an always-running controller:
 no daemon, automatic CI wake-up, tmux/Herdr management, or cross-provider adapter

@@ -26,24 +26,34 @@ boundaries or databases/ports. Isolate runtime resources when relevant.
 
 | File | Owner | Contract |
 | --- | --- | --- |
-| `task.md` | Coordinator/planner | Original intent, approved plan, acceptance IDs, verification strategy |
+| `task.md` | Coordinator/planner | Original intent, approved plan, acceptance IDs, setup, standing rules, verification strategy |
 | `status.json` | Coordinator | Current stage, paths, SHAs, approvals, repair counts, latest outputs, PR/CI |
 | `approval-NN.md` | Coordinator | Actual approval words and context, retained when task changes |
+| `patch-NN.json` | Coordinator | Status patches, numbered in the order applied |
+| `friction.md` | Coordinator | Numbered workflow friction and themes from worker handoffs |
 | `dispatch-<stage>-NN.md` | Coordinator | Filled worker assignment and exact input/output paths |
 | `baseline.md` | First builder | Before-change behavior and check results, including existing failures |
 | `build-NN.md` | Builder | Candidate SHA, criterion evidence, changes, findings addressed, limits |
 | `review-NN.md` | Fresh reviewer | Reviewed SHA, verdict, criterion coverage, supported findings |
 | `ship-NN.md` | Shipper | Published head/PR, CI evidence, delivery verdict, blockers |
-| `evidence/` | Assigned worker | Bounded logs, screenshots, reproductions, and command results |
+| `evidence/` | Assigned worker | Bounded logs, screenshots, reproductions, and command results, prefixed with the handoff name |
 
 NN starts at 01. Keep previous handoffs. A later shipping checkpoint on the same
 candidate gets an unused shipping filename; do not overwrite earlier CI evidence.
 All handoffs identify the run, task SHA-256, relevant full commit SHAs, author
 role, and timestamp. Separate observed evidence from claims and proposals.
+Timestamps are when the handoff was written, not an ordering guarantee; order
+stages by status revision and SHAs.
+
+Start each evidence log with the full commit it ran against (`git rev-parse
+HEAD`) and whether the tree was clean. A log from an uncommitted tree records
+the parent commit and says so; it does not prove the final candidate.
 
 Use [task](../assets/task.md), [dispatch](../assets/dispatch.md),
-[build](../assets/build.md), [review](../assets/review.md), and
-[ship](../assets/ship.md) templates. There is no hidden agent transcript dependency.
+[baseline](../assets/baseline.md), [build](../assets/build.md),
+[review](../assets/review.md), [ship](../assets/ship.md), and
+[friction](../assets/friction.md) templates. Keep every template section; write
+"none" rather than deleting one. There is no hidden agent transcript dependency.
 Trim sensitive data before saving evidence; keep records local and out of product
 commits. Ignoring these paths in a project is unnecessary because they live outside
 it. Do not commit `.pior-factory-runs` into this context repository either.
@@ -60,8 +70,10 @@ node <workflow-skill>/scripts/factory-run.mjs approve --run <run-dir> --expected
 node <workflow-skill>/scripts/factory-run.mjs update --run <run-dir> --expected-revision 1 --patch <patch-json-file>
 ```
 
-`init` creates the task template, evidence directory, and revision 0 status in
-planning. It records an absolute main checkout path, deliberate base ref, pinned
+`init` creates the task and friction templates, evidence directory, and revision
+0 status in planning. It never fetches. Its output includes a `warnings` list,
+also printed to stderr, when a local base branch differs from its upstream;
+a remote-tracking base is only as fresh as the last fetch. It records an absolute main checkout path, deliberate base ref, pinned
 initial/comparison base SHAs, suggested worktree and branch, round 1, repair
 count 0, and limit 3. It refuses existing task directories and invalid IDs.
 Use `--root <absolute-directory>` only when deliberately overriding local storage.
@@ -72,7 +84,7 @@ conversation. Fill all task placeholders and resolve meaningful decisions first.
 For renewed approval, archive the previous task before editing it. Approval
 records get revision-based filenames and are never silently replaced.
 
-`update` consumes a JSON object patch from a file. Editable fields are stage,
+`update` consumes a JSON object patch from a file named `patch-NN.json`. Editable fields are stage,
 round, repair_count, max_repair_rounds, repair_limit_note, comparison_base_sha,
 candidate_sha, reviewed_sha, review_verdict, latest_build, latest_review,
 latest_ship, pr_url, publication_authorized, publication_note, ci_status,

@@ -16,6 +16,10 @@
   Explain intentional behavior changes and retain original failure evidence.
 - Reuse project formatters and validation commands. Change lockfiles only when
   required, using the project's package manager.
+- After adding or changing a dependency, read the lockfile diff for unrelated
+  version changes and removals, and check that development tooling did not
+  enter the production install or image, for example through an optional peer.
+  Report what you found as a decision for the reviewer.
 - Update documentation when behavior requires it. Keep implementation detail out
   of product flows unless it helps users.
 - Inspect the final diff for unrelated edits, generated artifacts, and temporary

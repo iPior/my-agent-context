@@ -16,15 +16,42 @@
 
 {{IN_SCOPE_OUT_OF_SCOPE_CONSTRAINTS}}
 
+## Setup and environment
+
+Commands and prerequisites a worker needs in a clean worktree: installs,
+credentials supplied through the environment, variables a command needs even
+when it does not connect, and local toolchain versions that differ from CI.
+
+{{SETUP_PREREQUISITES_AND_TOOLCHAIN_DIFFERENCES_OR_NONE}}
+
 ## Verification plan
 
 | Criterion | Baseline/reproduction | After-change evidence | Regression checks |
 | --- | --- | --- | --- |
 | AC-1 | {{BASELINE}} | {{PROOF}} | {{REGRESSION}} |
 
+Real-browser check for user-facing criteria (how the application is started,
+how sign-in is automated, who runs it), or the user's recorded waiver:
+
+{{BROWSER_CHECK_PLAN_OR_NOT_USER_FACING_OR_USER_WAIVER}}
+
 ## Decisions and assumptions
 
-{{DECISIONS_AND_OPEN_QUESTIONS}}
+Decided by the user:
+
+{{USER_DECISIONS_OR_NONE}}
+
+Proposals accepted when this plan is approved as written (IDs D-1, D-2, ...).
+Edit these before approval if the user changes one:
+
+{{NUMBERED_PROPOSALS_OR_NONE}}
+
+## Standing rules for workers
+
+User and project rules every worker must follow, such as attribution, writing
+style, and data handling. They take precedence over defaults a harness injects.
+
+{{STANDING_RULES_OR_NONE}}
 
 ## Publication request
 

@@ -21,13 +21,66 @@ Do not claim independent review in the builder's own session.
    weakened and evidence belongs to this candidate.
 3. Re-run targeted checks or reproduce suspicious behavior when useful. Separate
    pre-existing failures from new defects. Avoid duplicating expensive checks
-   when reliable evidence already establishes them.
-4. Record actionable, supported findings. Include severity, file/line, observed
-   behavior, reproduction or reasoning, expected behavior, and acceptance IDs.
-   Label unverified concerns and missing evidence honestly.
+   when reliable evidence already establishes them. Trust a builder log only
+   when it names the candidate commit it ran against.
+4. Record actionable, supported findings. Include severity, whether it blocks,
+   file/line, observed behavior, reproduction or reasoning, expected behavior,
+   and acceptance IDs. Label unverified concerns and missing evidence honestly.
 5. Save the assigned `review-NN.md` with a full reviewed SHA and one verdict:
    `pass`, `changes_requested`, or `blocked`. A pass requires acceptance coverage
    and no unresolved blocking findings; it is not a defect-free guarantee.
+
+## Probe without touching the candidate
+
+Trying to break the candidate is part of the review; changing it is not. Keep
+probe tests, scripts, and mutation checks outside the task worktree:
+
+- Put probe files in a scratch directory and import the project's code and test
+  fixtures by absolute path, running them with the project's own test runner.
+- For mutation checks, or anything that must edit tracked files, use a
+  throwaway copy: `git worktree add --detach <scratch-path> <candidate-sha>`,
+  removed with `git worktree remove` when done. Never mutate the task worktree.
+- Running the project's checks in the task worktree is fine. Ignored build
+  outputs may change; `git status` must be clean when you finish.
+
+## Exercise user-facing behavior
+
+When the candidate changes what users see in a browser, do both of these in a
+real browser, headless is fine, against the running application:
+
+1. Re-run the committed end-to-end test on the candidate, and read it: check
+   that it asserts the criteria rather than only that pages load. Running it
+   proves only what the builder chose to test.
+2. Explore on your own with a short scripted browser session the builder did
+   not write. Cover each user-facing criterion and failure state, then try what
+   the test skips: keyboard-only use and focus, repeated and rapid actions,
+   reload and back navigation mid-flow, long or unusual input, a narrow
+   viewport, and console or network errors.
+
+Do not rely on the builder's screenshots or on simulated-DOM tests. Use a
+disposable database and the planned sign-in method; never a development or
+production database. Keep exploratory scripts outside the task worktree. Save
+your own screenshots under the evidence directory, and list in the handoff
+what each of the two passes exercised and what it did not. A defect found only
+by exploring is a finding; recommend adding it to the committed test.
+
+If you cannot run a browser or sign in, and the approved task does not record
+the user's acceptance of that gap, the criterion is unverified: return
+`blocked` naming the missing capability rather than `pass` with a limitation.
+
+## Decide the verdict
+
+A finding blocks when the candidate fails an acceptance criterion, breaks a
+project standard or standing rule, or has a correctness, security, or data
+defect in the approved behavior. Hardening beyond the stated criteria, missing
+tests for behavior that works, and preferences are nonblocking. `pass` may
+carry nonblocking findings; the coordinator decides whether to repair them or
+list them as follow-ups. Use `changes_requested` only for blocking findings,
+and say in the summary when blocking was a judgment call.
+
+On a re-review, follow the dispatch's review scope. Unless it asks for the full
+candidate, review the repair diff and what it could regress, give the status
+of each prior finding, and rely on the earlier review for untouched code.
 
 Use stable finding IDs such as R1-F1. Compare prior findings during re-review and
 identify resolutions or recurrences. Cosmetic preferences are nonblocking unless
