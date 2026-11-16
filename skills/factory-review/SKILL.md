@@ -18,7 +18,9 @@ Do not claim independent review in the builder's own session.
    surrounding code. Use the build handoff as claims to check.
 2. Evaluate scope, acceptance coverage, correctness, regressions, maintainability,
    data handling, and relevant security concerns. Check that tests have not been
-   weakened and evidence belongs to this candidate.
+   weakened and evidence belongs to this candidate. Compare every changed
+   existing test expectation with the task's list of tests it changes; an
+   unlisted change needs a reason in the build handoff and your judgment.
 3. Re-run targeted checks or reproduce suspicious behavior when useful. Separate
    pre-existing failures from new defects. Avoid duplicating expensive checks
    when reliable evidence already establishes them. Trust a builder log only

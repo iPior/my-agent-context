@@ -161,6 +161,7 @@ try {
   for (const name of ["task.md", "dispatch.md"]) {
     assert.match(fs.readFileSync(path.join(assets, name), "utf8"), /Standing rules/);
   }
+  assert.match(fs.readFileSync(path.join(assets, "task.md"), "utf8"), /## Existing tests this task changes/);
   checks++;
 
   // Exercise the real installer with an isolated homedir implementation, never

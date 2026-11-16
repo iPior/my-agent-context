@@ -14,6 +14,10 @@
   for trivial presentation changes.
 - Do not weaken tests, checks, or acceptance criteria to make results pass.
   Explain intentional behavior changes and retain original failure evidence.
+- Change an existing test's expectation only when the task's "Existing tests
+  this task changes" section lists it. If another existing test conflicts with
+  the approved behavior, make the smallest change, and list it in the handoff
+  as a decision beyond the plan with its old and new expectation.
 - Reuse project formatters and validation commands. Change lockfiles only when
   required, using the project's package manager.
 - After adding or changing a dependency, read the lockfile diff for unrelated
