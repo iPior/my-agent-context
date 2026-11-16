@@ -16,6 +16,14 @@
 
 {{IN_SCOPE_OUT_OF_SCOPE_CONSTRAINTS}}
 
+## Existing tests this task changes
+
+Tests whose current assertions the approved behavior makes wrong. Each entry
+names the test, what it asserts today, what it will assert, and the criterion
+that requires the change. Builders change only these; reviewers check them.
+
+{{CHANGED_TEST_EXPECTATIONS_OR_NONE_FOUND}}
+
 ## Setup and environment
 
 Commands and prerequisites a worker needs in a clean worktree: installs,

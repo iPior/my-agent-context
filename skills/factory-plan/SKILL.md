@@ -40,7 +40,18 @@ Fill the task template with:
   standing rules workers must follow.
 - A verification plan connecting each criterion to a test, reproduction, UI
   walkthrough, or other observable evidence. Include regression checks.
+- Existing tests the task will change, each with its old and new expectation.
 - The proposed base ref and known pre-existing failures or setup needs.
+
+Find the existing tests the task intentionally contradicts. For each behavior
+the task changes, such as an error code, a validation rule, a response shape,
+or what the UI shows, search the tests for assertions of the old behavior and
+list each one in the task: the test, what it asserts today, what it will assert,
+and why. This is a deliberate change, not a weakened test; listing it lets the
+user approve it and lets the reviewer check exactly these. Also look for
+conflicts inside the plan itself, such as "existing codes unchanged" next to a
+new code that replaces one for some inputs. Write "none found" when the search
+finds nothing.
 
 For a change users see in a browser, plan an end-to-end check in a real
 browser, headless is fine, that drives the running application through each
