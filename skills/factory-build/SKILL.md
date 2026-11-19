@@ -41,7 +41,9 @@ reconstruct accepted requirements from a summary or create new run state.
    test when the plan calls for one, run it in a real browser against the
    running application, and save screenshots or traces per criterion. A
    simulated-DOM test is not that check. The reviewer re-runs it and explores
-   separately, so say how to start the application and run the test.
+   separately, so say how to start the application and run the test. Start
+   servers outside the committed test runner with the workflow's server
+   helper (see the run contract) and stop them before returning.
 4. Compare before and after using the same meaningful scenario where possible.
    Save commands, exit results, and relevant screenshots/logs under the assigned
    evidence directory. Explain checks that could not run.

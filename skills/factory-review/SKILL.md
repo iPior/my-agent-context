@@ -61,7 +61,9 @@ real browser, headless is fine, against the running application:
 
 Do not rely on the builder's screenshots or on simulated-DOM tests. Use a
 disposable database and the planned sign-in method; never a development or
-production database. Keep exploratory scripts outside the task worktree. Save
+production database. Keep exploratory scripts outside the task worktree.
+Start and stop the application for exploration with the workflow's server
+helper (see the run contract), and stop it before writing the handoff. Save
 your own screenshots under the evidence directory, and list in the handoff
 what each of the two passes exercised and what it did not. A defect found only
 by exploring is a finding; recommend adding it to the committed test.

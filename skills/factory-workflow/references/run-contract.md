@@ -112,6 +112,41 @@ If interrupted during a write, inspect the lock and temporary files, confirm
 there is no live writer, then remove only the stale lock and retry with the
 current revision. Never automatically break a lock by guessing elapsed time.
 
+## Server helper
+
+Workers that run the application outside its committed test runner, such as a
+reviewer's exploration or a builder's reproduction, start and stop it with the
+bundled server helper instead of backgrounding processes by hand. It is a plain
+command, not a service: it starts each server in its own process group, records
+the real PID, its start time and the port under a state directory, waits until
+the port (and an optional URL) answers, and stops exactly that group later.
+
+```sh
+E2E_API_PORT=3373 node <workflow-skill>/scripts/factory-servers.mjs start --dir <run-dir>/servers \
+  --name api --port 3373 --cwd <worktree>/packages/api --ready-url http://localhost:3373/health \
+  -- node --import tsx test/e2e-server.ts
+node <workflow-skill>/scripts/factory-servers.mjs status --dir <run-dir>/servers
+node <workflow-skill>/scripts/factory-servers.mjs stop --dir <run-dir>/servers --all
+```
+
+Pass server environment variables as a prefix; they are inherited. `start`
+refuses a name that is still running and a port that is already in use, so a
+stale server can never be reported ready in place of a new one. It fails with
+the last log lines when the server exits early or is not ready before
+`--timeout` seconds (default 60), and stops what it started. Output goes to
+`<name>.log` in the state directory. `stop` sends SIGTERM to the whole group,
+then SIGKILL after `--grace` seconds (default 10), and reports whether the
+port is free. A killed test fixture cannot drop its database or stop its
+container, so give a slow cleanup enough grace. A record
+whose PID now names a different process is treated as not running and left
+alone. Never stop servers with `pkill -f` or `pgrep -f`; those patterns can
+match the calling shell.
+
+Stop every server before returning a handoff, and restart rather than reuse a
+server when a rerun needs fresh data. Name a state directory per worker when
+two could overlap. The helper does not isolate databases or choose ports; use
+the project's disposable fixtures and ports that differ from development ones.
+
 ## Resume
 
 Read status and task, check the approved digest, latest handoffs, actual worktree
