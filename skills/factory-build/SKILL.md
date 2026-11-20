@@ -35,7 +35,9 @@ reconstruct accepted requirements from a summary or create new run state.
    does not stop at the first. Fix supported defects and explain disagreements
    with evidence. Do not blindly apply speculative review suggestions.
 3. Run checks appropriate to the change: relevant tests, type checks, lint,
-   builds, and runtime/UI checks as needed. Map evidence to acceptance IDs.
+   builds, and runtime/UI checks as needed. Iterate with targeted tests and
+   run the full suite once, on the final committed candidate (step 5). Start
+   long checks in the background where the harness allows. Map evidence to acceptance IDs.
    Passing a build alone does not demonstrate behavioral completion.
    For browser-facing changes, write the planned end-to-end test as a committed
    test when the plan calls for one, run it in a real browser against the

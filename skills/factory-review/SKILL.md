@@ -22,9 +22,12 @@ Do not claim independent review in the builder's own session.
    existing test expectation with the task's list of tests it changes; an
    unlisted change needs a reason in the build handoff and your judgment.
 3. Re-run targeted checks or reproduce suspicious behavior when useful. Separate
-   pre-existing failures from new defects. Avoid duplicating expensive checks
-   when reliable evidence already establishes them. Trust a builder log only
-   when it names the candidate commit it ran against.
+   pre-existing failures from new defects. Do not repeat a full check that CI
+   runs on the PR head (the dispatch lists them) when the builder's log for
+   this exact candidate shows it passing: CI is that independent run. Run the
+   tests for what changed and any check CI does not run; with no CI, run the
+   full suite. Trust a builder log only when it names the candidate commit it
+   ran against. Start long checks in the background and read code meanwhile.
 4. Record actionable, supported findings. Include severity, whether it blocks,
    file/line, observed behavior, reproduction or reasoning, expected behavior,
    and acceptance IDs. Label unverified concerns and missing evidence honestly.
@@ -52,7 +55,9 @@ real browser, headless is fine, against the running application:
 
 1. Re-run the committed end-to-end test on the candidate, and read it: check
    that it asserts the criteria rather than only that pages load. Running it
-   proves only what the builder chose to test.
+   proves only what the builder chose to test. On a `repair` or `light`
+   review, when CI runs the whole suite on the PR head, run only the
+   scenarios the change touches.
 2. Explore on your own with a short scripted browser session the builder did
    not write. Cover each user-facing criterion and failure state, then try what
    the test skips: keyboard-only use and focus, repeated and rapid actions,
@@ -82,9 +87,13 @@ carry nonblocking findings; the coordinator decides whether to repair them or
 list them as follow-ups. Use `changes_requested` only for blocking findings,
 and say in the summary when blocking was a judgment call.
 
-On a re-review, follow the dispatch's review scope. Unless it asks for the full
-candidate, review the repair diff and what it could regress, give the status
-of each prior finding, and rely on the earlier review for untouched code.
+Follow the dispatch's review scope. `full` covers the whole candidate.
+`repair` covers the repair diff and what it could regress, gives the status of
+each prior finding, and relies on the earlier review for untouched code.
+`light` covers the diff, each finding's fix and test, the targeted tests, and
+one browser check of the affected flow when it is user-facing. If the change
+turns out riskier than its scope (authorization, data, schema, or broader than
+described), say so and review it at the depth it needs.
 
 Use stable finding IDs such as R1-F1. Compare prior findings during re-review and
 identify resolutions or recurrences. Cosmetic preferences are nonblocking unless

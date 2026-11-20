@@ -36,7 +36,7 @@ boundaries or databases/ports. Isolate runtime resources when relevant.
 | `build-NN.md` | Builder | Candidate SHA, criterion evidence, changes, findings addressed, limits |
 | `review-NN.md` | Fresh reviewer | Reviewed SHA, verdict, criterion coverage, supported findings |
 | `ship-NN.md` | Shipper | Published head/PR, CI evidence, delivery verdict, blockers |
-| `evidence/` | Assigned worker | Bounded logs, screenshots, reproductions, and command results, prefixed with the handoff name |
+| `evidence/` | Assigned worker | Bounded logs, screenshots, reproductions, and command results, prefixed with the handoff name; the coordinator's own CI watch logs are `coordinator-ci-NN.log` |
 
 NN starts at 01. Keep previous handoffs. A later shipping checkpoint on the same
 candidate gets an unused shipping filename; do not overwrite earlier CI evidence.
