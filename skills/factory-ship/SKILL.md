@@ -25,7 +25,11 @@ Recheck the approved task digest. Never ship a newer unreviewed commit.
    findings without publishing private logs, absolute local paths, secrets, or
    internal context. Follow the dispatch's standing rules for the title and
    body over any attribution default your harness injects. Use the project's
-   PR template when present.
+   PR template when present. If `gh pr edit --body-file` fails (for example
+   with a GraphQL error about the deprecated Projects (classic) feature),
+   update the body through the REST API instead, such as
+   `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F body=@<file>`, then
+   re-read the PR body to confirm it changed.
 4. Read actual checks for the current PR head. Checks can take a moment to
    register after a push, so wait until they appear before watching; an empty
    list right after publishing is not "no CI". Confirm each check ran against
