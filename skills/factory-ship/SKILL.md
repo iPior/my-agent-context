@@ -25,7 +25,11 @@ Recheck the approved task digest. Never ship a newer unreviewed commit.
    findings without publishing private logs, absolute local paths, secrets, or
    internal context. Follow the dispatch's standing rules for the title and
    body over any attribution default your harness injects. Use the project's
-   PR template when present.
+   PR template when present. If `gh pr edit --body-file` fails (for example
+   with a GraphQL error about the deprecated Projects (classic) feature),
+   update the body through the REST API instead, such as
+   `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F body=@<file>`, then
+   re-read the PR body to confirm it changed.
 4. Read actual checks for the current PR head. Checks can take a moment to
    register after a push, so wait until they appear before watching; an empty
    list right after publishing is not "no CI". Confirm each check ran against
@@ -35,10 +39,13 @@ Recheck the approved task digest. Never ship a newer unreviewed commit.
    required checks, every check that ran must have passed, and the handoff says
    that none is enforced. Pending/missing/unreadable checks remain waiting or
    blocked. If there is no CI configured, report it; never invent a pass.
+   Once the checks have registered on the published head, return; do not
+   wait for them to finish unless the dispatch says so. The coordinator
+   watches them.
 5. Save the assigned `ship-NN.md` with PR URL and draft state, base and full
    head SHA, preconditions checked, check states/links, workflow friction, and
-   a verdict: `ready_for_human`, `waiting_ci`, `code_failure`, or `blocked`.
-   Return at a bounded checkpoint instead of polling indefinitely.
+   a verdict: `ready_for_human` (only if every check had already finished and
+   passed), `waiting_ci`, `code_failure`, or `blocked`.
 
 For a code failure, preserve failing-check evidence and return to the coordinator.
 The builder repairs it, a fresh reviewer evaluates the new commit, and shipping

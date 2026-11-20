@@ -100,7 +100,7 @@ workflow, and the global instructions are unchanged.
 | [factory-plan](skills/factory-plan/) | Inspect the project and agree on scope and acceptance criteria |
 | [factory-build](skills/factory-build/) | Implement or repair, follow coding standards, verify, and save evidence |
 | [factory-review](skills/factory-review/) | Independently evaluate the pinned candidate against approved intent |
-| [factory-ship](skills/factory-ship/) | Publish the reviewed candidate, monitor CI, and return failures |
+| [factory-ship](skills/factory-ship/) | Publish the reviewed candidate and confirm its CI checks started |
 
 Install all five together using the existing installer:
 
@@ -143,9 +143,12 @@ context and access to both worktree and run directory before dispatch. If a
 capability is missing, stop for an explicit manual handoff rather than claiming
 the automated step ran. Three automatic repair rounds are allowed across review
 and CI combined. Every code repair returns through verification and fresh review;
-a re-review covers the repair and its regressions unless the coordinator asks for
-the full candidate. A passing review may carry nonblocking findings, which the
-coordinator either repairs or lists as follow-ups in the PR.
+a re-review is scoped `full`, `repair` or `light` by risk. A passing review may
+carry nonblocking findings, which the coordinator either repairs or lists as
+follow-ups in the PR. To keep runs short, the coordinator picks a model per
+stage (strongest for planning, building and review; a fast one for shipping
+and small repairs), reviewers rely on CI instead of re-running the full suite,
+and the coordinator, not a worker, waits on CI.
 
 These skills provide a session-driven workflow, not an always-running controller:
 no daemon, automatic CI wake-up, tmux/Herdr management, or cross-provider adapter

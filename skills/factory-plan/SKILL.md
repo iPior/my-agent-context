@@ -39,7 +39,9 @@ Fill the task template with:
 - Setup and environment prerequisites, toolchain differences from CI, and the
   standing rules workers must follow.
 - A verification plan connecting each criterion to a test, reproduction, UI
-  walkthrough, or other observable evidence. Include regression checks.
+  walkthrough, or other observable evidence. Include regression checks, and
+  list the checks CI runs on the PR head (read the workflow files), so
+  reviewers can rely on CI for those instead of re-running them.
 - Existing tests the task will change, each with its old and new expectation.
 - The proposed base ref and known pre-existing failures or setup needs.
 

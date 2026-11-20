@@ -38,6 +38,11 @@ when it does not connect, and local toolchain versions that differ from CI.
 | --- | --- | --- | --- |
 | AC-1 | {{BASELINE}} | {{PROOF}} | {{REGRESSION}} |
 
+Checks CI runs on the PR head (reviewers rely on these instead of re-running
+them; see the coordinator's "Pace the run"):
+
+{{CI_CHECKS_OR_NO_CI}}
+
 Real-browser check for user-facing criteria (how the application is started,
 how sign-in is automated, who runs it), or the user's recorded waiver:
 

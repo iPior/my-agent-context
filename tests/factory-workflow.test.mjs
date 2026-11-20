@@ -162,6 +162,12 @@ try {
     assert.match(fs.readFileSync(path.join(assets, name), "utf8"), /Standing rules/);
   }
   assert.match(fs.readFileSync(path.join(assets, "task.md"), "utf8"), /## Existing tests this task changes/);
+  // Pacing: each dispatch states its model and review scope, and the task
+  // records which checks CI runs so reviewers can rely on them.
+  assert.match(fs.readFileSync(path.join(assets, "dispatch.md"), "utf8"), /Model and effort/);
+  assert.match(fs.readFileSync(path.join(assets, "dispatch.md"), "utf8"), /FULL_OR_REPAIR_OR_LIGHT/);
+  assert.match(fs.readFileSync(path.join(assets, "task.md"), "utf8"), /Checks CI runs on the PR head/);
+  assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-workflow/references/coordinator.md"), "utf8"), /## Pace the run/);
   checks++;
 
   // Exercise the real installer with an isolated homedir implementation, never

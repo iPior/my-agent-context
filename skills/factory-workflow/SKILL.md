@@ -46,7 +46,9 @@ not assume a child inherits loaded skills or the parent's conversation.
 4. Create the recorded branch and worktree from the pinned base commit only
    after approval. Capture the existing test/behavior baseline there before
    implementing. Never switch, clean, stash, or reset the user's checkout.
-5. Dispatch `factory-build`, then `factory-review` with a fresh context. Resume
+5. Dispatch `factory-build`, then `factory-review` with a fresh context,
+   choosing each dispatch's model, effort and review scope as the
+   coordinator contract's "Pace the run" describes. Resume
    the builder or start a replacement to address findings; run a new independent
    review on each changed candidate. Route approved candidates to `factory-ship`.
 6. Inspect actual CI results for the current PR head. Route code failures through

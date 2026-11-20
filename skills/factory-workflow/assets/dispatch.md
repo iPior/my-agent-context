@@ -2,6 +2,7 @@
 
 - Run directory: {{ABSOLUTE_RUN_PATH}}
 - Role and stage skill: {{ROLE_ROUND_AND_ABSOLUTE_SKILL_PATH}}
+- Model and effort: {{MODEL_AND_EFFORT_CHOSEN_FOR_THIS_STAGE_AND_WHY}}
 - Shared contract: {{ABSOLUTE_RUN_CONTRACT_PATH}}
 - Approved task / status: {{ABSOLUTE_INPUT_PATHS}}
 - Approved task SHA-256: {{TASK_DIGEST}}
@@ -15,7 +16,8 @@
 - Allowed actions and stage limits: {{BOUNDARIES}}
 - Assignment: {{BOUNDED_TASK}}
 - Finding dispositions: {{ID_FIX_OR_FIX_IF_SIMPLE_OR_SKIP_WITH_REASON_OR_NOT_APPLICABLE}}
-- Review scope: {{FULL_CANDIDATE_OR_REPAIR_DIFF_PLUS_REGRESSIONS_OR_NOT_APPLICABLE}}
+- Review scope: {{FULL_OR_REPAIR_OR_LIGHT_OR_NOT_APPLICABLE}}
+- Checks CI runs on the PR head: {{FROM_TASK_VERIFICATION_PLAN}}
 
 Read the named skill and contract before work. Preserve the original approved
 intent. Before other work, confirm you can read the run directory and worktree
