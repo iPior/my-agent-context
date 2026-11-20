@@ -129,11 +129,14 @@ node <workflow-skill>/scripts/factory-servers.mjs status --dir <run-dir>/servers
 node <workflow-skill>/scripts/factory-servers.mjs stop --dir <run-dir>/servers --all
 ```
 
-Pass server environment variables as a prefix; they are inherited. `start`
-refuses a name that is still running and a port that is already in use, so a
-stale server can never be reported ready in place of a new one. It fails with
-the last log lines when the server exits early or is not ready before
-`--timeout` seconds (default 60), and stops what it started. Output goes to
+Pass server environment variables as a prefix; they are inherited. `--cwd` is
+required so a server never runs in the caller's directory, such as the main
+checkout instead of the worktree. `start` refuses a name that is still running
+and a port that is already in use, so a stale server can never be reported
+ready in place of a new one; when a running server from the same state
+directory holds the port, the error names it. It fails with the last log lines
+when the server exits early (with its exit code or signal) or is not ready
+before `--timeout` seconds (default 60), and stops what it started. Output goes to
 `<name>.log` in the state directory. `stop` sends SIGTERM to the whole group,
 then SIGKILL after `--grace` seconds (default 10), and reports whether the
 port is free. A killed test fixture cannot drop its database or stop its

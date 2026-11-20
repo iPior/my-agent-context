@@ -55,6 +55,9 @@ if (mode === "parent") {
 } else if (mode === "crash") {
   console.error("fixture failed to boot");
   process.exit(3);
+} else if (mode === "signal") {
+  console.error("fixture killed itself");
+  process.kill(process.pid, "SIGTERM");
 } else if (mode === "silent") {
   setInterval(() => {}, 1000);
 } else if (mode === "slow-exit") {
@@ -71,26 +74,44 @@ try {
   const port = await freePort();
   const pids = path.join(temporary, "pids");
   const start = (name, serverPort, mode, extra = []) => [
-    "start", "--dir", state, "--name", name, "--port", String(serverPort), ...extra,
+    "start", "--dir", state, "--name", name, "--port", String(serverPort), "--cwd", temporary, ...extra,
     "--", process.execPath, fixture, mode, String(serverPort), pids,
   ];
 
   helper(["start", "--dir", state, "--name", "Bad Name", "--port", "1", "--", "true"], /--name/);
   helper(["start", "--dir", state, "--name", "web", "--port", "99999", "--", "true"], /--port/);
   helper(["start", "--dir", state, "--name", "web", "--port", "3000"], /after --/);
+  // --cwd is required and must name an existing directory.
+  helper(["start", "--dir", state, "--name", "web", "--port", "3000", "--", "true"], /Missing --cwd/);
+  helper(["start", "--dir", state, "--name", "web", "--port", "3000", "--cwd", path.join(temporary, "missing"),
+    "--", "true"], /--cwd .* does not exist/);
+  helper(["start", "--dir", state, "--name", "web", "--port", "3000", "--cwd", fixture, "--", "true"],
+    /--cwd .* is not a directory/);
   helper(["stop", "--dir", state], /exactly one/);
   helper(["stop", "--dir", state, "--name", "nothing"], /No record/);
 
   // Start: ready only once the grandchild listens, with the real PIDs recorded.
   const ready = helper(start("web", port, "parent"));
   assert.equal(ready.state, "ready");
+  assert.equal(ready.cwd, fs.realpathSync(temporary));
   assert.equal(ready.pid, Number(fs.readFileSync(`${pids}.parent`, "utf8")));
   const childPid = Number(fs.readFileSync(`${pids}.child`, "utf8"));
   assert.ok(alive(childPid));
 
-  // The same name, or another server on a busy port, is refused.
+  // The same name, or another server on a busy port, is refused, and a port
+  // held by a recorded server names that server.
   helper(start("web", port, "parent"), /already running/);
-  helper(start("other", port, "parent"), /already in use/);
+  helper(start("other", port, "parent"),
+    new RegExp(`Port ${port} is already in use by server "web" \\(pid ${ready.pid}\\) from this state directory\\. Stop it first\\.`));
+  assert.equal(fs.existsSync(path.join(state, "other.json")), false);
+
+  // A port held by a process with no record does not claim to know the owner.
+  const foreign = net.createServer().listen(0, "127.0.0.1");
+  await new Promise((resolve) => foreign.once("listening", resolve));
+  const foreignPort = foreign.address().port;
+  helper(start("other", foreignPort, "parent"),
+    new RegExp(`Port ${foreignPort} is already in use by a process with no running record in this state directory$`, "m"));
+  foreign.close();
 
   const [listed] = helper(["status", "--dir", state]);
   assert.deepEqual([listed.name, listed.running, listed.port_in_use], ["web", true, true]);
@@ -118,8 +139,11 @@ try {
   assert.ok(alive(process.pid));
 
   // A server that exits during startup fails with its log, leaving no record.
-  helper(start("crash", await freePort(), "crash"), /exited before it was ready[\s\S]*fixture failed to boot/);
+  // The error says how it exited: an exit code or a signal.
+  helper(start("crash", await freePort(), "crash"), /exited before it was ready \(exit code 3\)[\s\S]*fixture failed to boot/);
   assert.equal(fs.existsSync(path.join(state, "crash.json")), false);
+  helper(start("signal", await freePort(), "signal"), /exited before it was ready \(signal SIGTERM\)[\s\S]*fixture killed itself/);
+  assert.equal(fs.existsSync(path.join(state, "signal.json")), false);
 
   // A server that never listens is stopped at the timeout.
   helper(start("silent", await freePort(), "silent", ["--timeout", "1"]), /not ready within 1s and was stopped/);

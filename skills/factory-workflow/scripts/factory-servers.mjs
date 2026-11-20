@@ -15,11 +15,13 @@ const fail = (message) => { throw new Error(message); };
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const USAGE = `Usage:
-  factory-servers.mjs start --dir <state-dir> --name <name> --port <port>
-      [--cwd <dir>] [--ready-url <url>] [--timeout <seconds>] -- <command> [args...]
+  factory-servers.mjs start --dir <state-dir> --name <name> --port <port> --cwd <dir>
+      [--ready-url <url>] [--timeout <seconds>] -- <command> [args...]
   factory-servers.mjs status --dir <state-dir>
   factory-servers.mjs stop --dir <state-dir> (--name <name> | --all) [--grace <seconds>]
 
+--cwd is required so a server never runs in whatever directory the caller
+happens to be in, such as the main checkout instead of the worktree.
 Environment variables for the server are inherited: prefix them to this
 command (for example E2E_WEB_PORT=5373 node factory-servers.mjs start ...).`;
 
@@ -47,6 +49,26 @@ function serverName(value) {
   if (!NAME.test(value ?? "")) fail("--name must be 1 to 40 lowercase letters, digits or dashes");
   return value;
 }
+
+function workingDirectory(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    fail("Missing --cwd: give the directory the server must run in, such as the worktree");
+  }
+  let directory;
+  try {
+    directory = fs.realpathSync(path.resolve(value));
+  } catch {
+    fail(`--cwd ${value} does not exist`);
+  }
+  if (!fs.statSync(directory).isDirectory()) fail(`--cwd ${value} is not a directory`);
+  return directory;
+}
+
+// How the server's first process ended, from its exit event.
+const exitDescription = (exit) => {
+  if (!exit) return "";
+  return exit.code !== null ? ` (exit code ${exit.code})` : ` (signal ${exit.signal})`;
+};
 
 function portNumber(value) {
   const port = Number(value);
@@ -166,9 +188,9 @@ async function start(args) {
   const directory = stateDir(opts.dir);
   const name = serverName(opts.name);
   const port = portNumber(opts.port);
+  const cwd = workingDirectory(opts.cwd);
   const timeout = opts.timeout === undefined ? 60 : Number(opts.timeout);
   if (!Number.isFinite(timeout) || timeout <= 0) fail("--timeout must be a positive number of seconds");
-  const cwd = fs.realpathSync(path.resolve(opts.cwd ?? process.cwd()));
   if (opts["ready-url"] !== undefined && !/^https?:\/\//.test(opts["ready-url"])) fail("--ready-url must be an http or https URL");
 
   const existing = readRecord(directory, name);
@@ -177,7 +199,13 @@ async function start(args) {
   }
   // A busy port means some other process would answer the browser: refuse
   // rather than report a server ready that is not the one just started.
-  if (await portBusy(port)) fail(`Port ${port} is already in use by a process this helper did not start`);
+  if (await portBusy(port)) {
+    const holder = records(directory).find((record) => record.port === port && ownsGroup(record));
+    if (holder) {
+      fail(`Port ${port} is already in use by server "${holder.name}" (pid ${holder.pid}) from this state directory. Stop it first.`);
+    }
+    fail(`Port ${port} is already in use by a process with no running record in this state directory`);
+  }
 
   const log = path.join(directory, `${name}.log`);
   const output = fs.openSync(log, "a", 0o600);
@@ -187,6 +215,10 @@ async function start(args) {
   const child = spawn(command[0], command.slice(1), { cwd, detached: true, stdio: ["ignore", output, output] });
   fs.closeSync(output);
   const spawnError = new Promise((resolve) => child.once("error", resolve));
+  // This process keeps running while it waits for readiness, so it sees how
+  // the server's first process ended if it exits early.
+  let exit = null;
+  child.once("exit", (code, signal) => { exit = { code, signal }; });
   child.unref();
   const failed = await Promise.race([spawnError, sleep(50).then(() => null)]);
   if (failed) fail(`Could not start ${command[0]}: ${failed.message}`);
@@ -196,7 +228,10 @@ async function start(args) {
     ready_url: opts["ready-url"] ?? null, log, started_at: new Date().toISOString(),
   };
   if (record.pid_start_time === null) {
-    if (!groupAlive(record.pgid)) fail(`Server "${name}" exited before it was ready. Last log lines:\n${logTail(log)}`);
+    if (!groupAlive(record.pgid)) {
+      if (!exit) await sleep(100);
+      fail(`Server "${name}" exited before it was ready${exitDescription(exit)}. Last log lines:\n${logTail(log)}`);
+    }
     // Without a start time the server could not be told apart from a reused
     // PID later, so it could never be stopped safely.
     signalGroup(record.pgid, "SIGKILL");
@@ -208,7 +243,9 @@ async function start(args) {
   while (Date.now() < deadline) {
     if (!groupAlive(record.pgid)) {
       fs.unlinkSync(recordFile(directory, name));
-      fail(`Server "${name}" exited before it was ready. Last log lines:\n${logTail(log)}`);
+      // Give the exit event a moment to arrive if the group died just now.
+      if (!exit) await sleep(100);
+      fail(`Server "${name}" exited before it was ready${exitDescription(exit)}. Last log lines:\n${logTail(log)}`);
     }
     if ((await portBusy(port)) && (!record.ready_url || (await urlReady(record.ready_url)))) {
       process.stdout.write(`${JSON.stringify({ ...record, state: "ready" }, null, 2)}\n`);
