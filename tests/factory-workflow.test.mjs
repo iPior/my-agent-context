@@ -54,6 +54,9 @@ try {
   assert.equal(git("status", "--porcelain"), mainStatus);
   assert.deepEqual(initial.warnings, []);
   assert.match(fs.readFileSync(path.join(run, "friction.md"), "utf8"), /friction log/);
+  assert.match(fs.readFileSync(path.join(run, "ledger.md"), "utf8"), /## Findings/);
+  assert.equal(initial.ci_repair_count, 0);
+  assert.equal(initial.max_ci_repair_rounds, 1);
   assert.equal(Object.prototype.hasOwnProperty.call(read(), "warnings"), false);
   helper(["init", "--repo", repo, "--id", "change", "--base", "HEAD", "--root", runRoot], /exist/i);
   assert.equal(read().revision, 0);
@@ -129,6 +132,45 @@ try {
   assert.equal(read().pr_url, "https://github.com/example/project/pull/1");
   assert.equal(read().repair_count, 1);
   assert.equal(read().candidate_sha, repaired);
+
+  // A CI failure is repaired on its own budget, separate from review repairs.
+  update({ stage: "building", candidate_sha: null, reviewed_sha: null, review_verdict: null,
+    ci_status: "unknown", round: 3, repair_count: 1 }, /round must equal/);
+  update({ stage: "building", candidate_sha: null, reviewed_sha: null, review_verdict: null,
+    ci_status: "unknown", round: 3, ci_repair_count: 1 });
+  update({ round: 4, ci_repair_count: 2 }, /CI repair limit exhausted/);
+  update({ max_ci_repair_rounds: 2, repair_limit_note: read().repair_limit_note }, /authorization/);
+  fs.writeFileSync(path.join(initial.worktree_path, "abandoned.txt"), "unpublished repair\n");
+  execFileSync("git", ["-C", initial.worktree_path, "add", "abandoned.txt"]);
+  execFileSync("git", ["-C", initial.worktree_path, "commit", "-m", "Abandoned repair"], { stdio: "pipe" });
+  const abandoned = execFileSync("git", ["-C", initial.worktree_path, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  fs.writeFileSync(path.join(run, "build-03.md"), `Candidate: ${abandoned}\n`);
+  update({ stage: "reviewing", candidate_sha: abandoned, latest_build: "build-03.md" });
+
+  // Falling back to the reviewed, published head keeps the unpublished commits
+  // local and refuses to ship them.
+  const fallbackNote = path.join(temporary, "fallback.txt");
+  fs.writeFileSync(fallbackNote, "Fixture user chose to keep the PR at the reviewed head.\n");
+  function fallback(to, review, errorPattern) {
+    return helper(["fallback", "--run", run, "--expected-revision", String(read().revision), "--to", to,
+      "--review", review, "--note", fallbackNote], errorPattern);
+  }
+  fallback(repaired, "review-01.md", /name this SHA/);
+  const stranger = "f".repeat(40);
+  fs.writeFileSync(path.join(run, "review-x.md"), `Reviewed: ${stranger}\n- Verdict: pass\n`);
+  fallback(stranger, "review-x.md", /ancestors/);
+  fallback(repaired, "../approval.txt", /Invalid handoff/);
+  fallback(repaired, "review-02.md");
+  assert.equal(read().stage, "paused");
+  assert.equal(read().candidate_sha, repaired);
+  assert.equal(read().reviewed_sha, repaired);
+  assert.equal(read().abandoned_head_sha, abandoned);
+  assert.equal(read().ci_status, "unknown");
+  assert.ok(fs.existsSync(path.join(run, `fallback-${read().revision}.md`)));
+  update({ abandoned_head_sha: null }, /not editable/);
+  update({ stage: "shipping" }, /Cannot ship after a fallback/);
+  update({ ci_status: "passed", stage: "ready_for_human", blocked_reason: null });
+  assert.equal(read().stage, "ready_for_human");
   assert.equal(git("status", "--porcelain"), mainStatus);
   assert.equal(git("rev-parse", "HEAD"), base);
 
@@ -152,7 +194,7 @@ try {
 
   // Every template a contract names must ship, with a friction slot in each handoff.
   const assets = path.join(ROOT, "skills/factory-workflow/assets");
-  for (const name of ["task.md", "dispatch.md", "baseline.md", "build.md", "review.md", "ship.md", "friction.md"]) {
+  for (const name of ["task.md", "dispatch.md", "baseline.md", "build.md", "review.md", "ship.md", "friction.md", "ledger.md", "pr.md"]) {
     assert.ok(fs.existsSync(path.join(assets, name)), `Missing template: ${name}`);
   }
   for (const name of ["build.md", "review.md", "ship.md"]) {
@@ -162,6 +204,14 @@ try {
     assert.match(fs.readFileSync(path.join(assets, name), "utf8"), /Standing rules/);
   }
   assert.match(fs.readFileSync(path.join(assets, "task.md"), "utf8"), /## Existing tests this task changes/);
+  // The plan records how to run things by hand and what a merge can affect,
+  // and the PR carries the blast radius and the run's cost.
+  assert.match(fs.readFileSync(path.join(assets, "task.md"), "utf8"), /## Run it by hand/);
+  assert.match(fs.readFileSync(path.join(assets, "task.md"), "utf8"), /## Blast radius/);
+  assert.match(fs.readFileSync(path.join(assets, "pr.md"), "utf8"), /## Blast radius/);
+  assert.match(fs.readFileSync(path.join(assets, "pr.md"), "utf8"), /## Factory run/);
+  assert.match(fs.readFileSync(path.join(assets, "dispatch.md"), "utf8"), /Required outcome/);
+  assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-workflow/references/coordinator.md"), "utf8"), /## Cap each finding/);
   // Pacing: each dispatch states its model and review scope, and the task
   // records which checks CI runs so reviewers can rely on them.
   assert.match(fs.readFileSync(path.join(assets, "dispatch.md"), "utf8"), /Model and effort/);

@@ -30,7 +30,14 @@ version-specific behavior. State explicitly when there are no findings.
 
 ## Prior findings
 
+For each: resolved, partly resolved or recurring. Name the root ID of any
+recurrence, and whether the repair was a materially different approach.
+
 {{RESOLVED_RECURRING_OR_NOT_APPLICABLE}}
+
+## Blast radius check
+
+{{TASK_BLAST_RADIUS_CONFIRMED_CORRECTED_OR_EXTENDED_AGAINST_THE_DIFF}}
 
 ## Limitations and decisions needed
 

@@ -141,11 +141,18 @@ and passes each stage skill's path in the dispatch.
 Start with native subagents in one supported harness. Verify independent reviewer
 context and access to both worktree and run directory before dispatch. If a
 capability is missing, stop for an explicit manual handoff rather than claiming
-the automated step ran. Three automatic repair rounds are allowed across review
-and CI combined. Every code repair returns through verification and fresh review;
-a re-review is scoped `full`, `repair` or `light` by risk. A passing review may
-carry nonblocking findings, which the coordinator either repairs or lists as
-follow-ups in the PR. To keep runs short, the coordinator picks a model per
+the automated step ran. Three automatic repair rounds are allowed for review
+findings, and separately one for a CI code failure. Each finding is capped: a
+nonblocking one gets one repair attempt and a blocking one two, and any later
+attempt needs the user and a materially different approach. Every code repair
+returns through verification and fresh review; a re-review is scoped `full`,
+`repair` or `light` by risk. A passing review may carry nonblocking findings;
+the coordinator recommends repairing them in one batched round or listing them
+as follow-ups, and tells the user which. A run that abandons later local
+repairs can fall back to its last reviewed, published candidate. The PR is
+meant to be the one thing to read: its body carries a blast radius (what a
+merge affects and how to roll it back), per-criterion verification, limits,
+follow-ups, and the run's cost per stage and per finding from the run ledger. To keep runs short, the coordinator picks a model per
 stage (strongest for planning, building and review; a fast one for shipping
 and small repairs), reviewers rely on CI instead of re-running the full suite,
 and the coordinator, not a worker, waits on CI.

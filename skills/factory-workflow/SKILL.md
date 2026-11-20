@@ -54,8 +54,8 @@ not assume a child inherits loaded skills or the parent's conversation.
 6. Inspect actual CI results for the current PR head. Route code failures through
    build and review again, updating the existing PR. Classify infrastructure,
    credential, and unavailable-check failures separately from code defects.
-7. Present the PR, evidence, outstanding decisions, and the friction recorded
-   in the run. Leave merging to the user. Reconcile a user-performed merge
+7. Present the PR, evidence, outstanding decisions, the run's cost per stage
+   and per finding from the ledger, and the friction recorded in the run. Leave merging to the user. Reconcile a user-performed merge
    before marking the run complete.
 
 ## Keep the coordinator small
@@ -67,10 +67,15 @@ in the run's `evidence/` directory, with pointers in the handoff. Note workflow
 friction in the run's `friction.md` as it happens; do not edit the installed
 skills during a run.
 
-Use at most three automatic repair rounds across review and CI combined. Pause
-earlier for repeated unresolved findings, material scope changes, critical risk,
-or a true external blocker. The user may authorize another bounded attempt.
-Do not repeatedly spawn agents without new evidence.
+Use at most three automatic repair rounds for review findings, and separately
+one for a CI code failure. Cap each finding: one attempt for a nonblocking
+finding and two for a blocking one, a later attempt only with a materially
+different approach (see the coordinator contract). Tell the user how you
+triaged nonblocking findings rather than deciding silently. Pause earlier for
+material scope changes, critical risk, or a true external blocker. The user
+may authorize another bounded attempt. Do not repeatedly spawn agents without
+new evidence. Record every dispatch's model, tokens and duration in the run's
+`ledger.md`.
 
 This is a session-driven workflow, not an unattended service. Tmux can preserve
 the process, but these skills do not provide event delivery, a daemon, or crash

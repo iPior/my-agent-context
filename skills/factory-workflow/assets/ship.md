@@ -14,9 +14,12 @@
 
 {{CLEAN_WORKTREE_HEAD_EQUALS_REVIEWED_SHA_TASK_DIGEST_REMOTE_STATE}}
 
-## PR summary and verification
+## PR body
 
-{{CONCRETE_CHANGE_AND_RELEVANT_EVIDENCE}}
+Built from the PR template; confirm each section is present and current,
+including the blast radius and the factory run figures.
+
+{{SECTIONS_WRITTEN_OR_REFRESHED_AND_BODY_REREAD}}
 
 ## CI at the recorded head
 

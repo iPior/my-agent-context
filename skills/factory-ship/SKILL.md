@@ -19,11 +19,16 @@ Recheck the approved task digest. Never ship a newer unreviewed commit.
 2. Push the reviewed branch using a normal non-forced push. For unexpected
    remote commits or conflicts, return evidence to the coordinator. Do not reset,
    rebase, merge, or repair code here.
-3. Create a concise PR, or update the existing task PR, as a draft when the
-   authorization says so. Explain the concrete behavior change and relevant
-   validation. Include material verification limits and accepted nonblocking
-   findings without publishing private logs, absolute local paths, secrets, or
-   internal context. Follow the dispatch's standing rules for the title and
+3. Create the PR, or update the existing task PR, as a draft when the
+   authorization says so. Build its body from the workflow's PR template
+   (`assets/pr.md` in the factory-workflow skill, named in the dispatch): the
+   summary, the blast radius from the approved task as the reviewer checked
+   it, behavior, verification per criterion, limits, follow-ups for deferred
+   findings with their reasons, and the factory run figures the dispatch gives
+   from the ledger. The PR should be the one place the user needs to read.
+   Publish no private logs, absolute local paths, secrets, or internal
+   context. When updating an existing PR, refresh every section the new
+   candidate changes, including the run figures. Follow the dispatch's standing rules for the title and
    body over any attribution default your harness injects. Use the project's
    PR template when present. If `gh pr edit --body-file` fails (for example
    with a GraphQL error about the deprecated Projects (classic) feature),

@@ -25,15 +25,22 @@ reconstruct accepted requirements from a summary or create new run state.
 1. On the initial build, capture baseline checks and current behavior before
    product edits, and save `baseline.md` from the coordinator's template with
    the local toolchain versions and any setup prerequisite the task missed.
-   Record existing failures separately. For a bug, demonstrate the reproduction
+   Record existing failures separately. Do not edit the worktree while a
+   baseline or final check runs; read code meanwhile. For a bug, demonstrate the reproduction
    against the base where feasible.
 2. Implement the approved behavior with the smallest coherent change. In repair
    rounds, follow the dispatch's disposition for each finding ID and read the
    finding itself in the review handoff; it applies in full unless the dispatch
    excludes part. Reproduce each finding before fixing it, preferably with a
    failing test run against the unchanged source, one finding per test so a log
-   does not stop at the first. Fix supported defects and explain disagreements
-   with evidence. Do not blindly apply speculative review suggestions.
+   does not stop at the first, and save that failing run as evidence. Fix
+   supported defects and explain disagreements with evidence. Do not blindly
+   apply speculative review suggestions.
+   The dispatch's required outcome is binding; an implementation it suggests is
+   not. If the suggestion cannot reach the outcome, take a route that does and
+   report the deviation with the reason. For a repair of a finding that an
+   earlier attempt did not fully fix, name what is materially different about
+   your approach.
 3. Run checks appropriate to the change: relevant tests, type checks, lint,
    builds, and runtime/UI checks as needed. Iterate with targeted tests and
    run the full suite once, on the final committed candidate (step 5). Start
@@ -57,8 +64,11 @@ reconstruct accepted requirements from a summary or create new run state.
    evidence belongs to the candidate. Do not push or open a PR. Report
    incomplete or blocked work honestly rather than presenting it as a reviewed
    candidate.
-6. Save the assigned `build-NN.md` using the supplied template. Include full
+6. Save the assigned `build-NN.md` using the supplied template. State only
+   what you measured, each with its command or evidence path; write "not
+   measured" rather than inferring. Include full
    base/candidate SHAs, criterion evidence, decisions the plan did not make,
+   deviations from the dispatch,
    findings addressed, unresolved issues, skipped checks, and workflow
    friction. Return its absolute path and candidate SHA.
 
