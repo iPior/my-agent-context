@@ -12,7 +12,7 @@ const STAGES = new Set(["planning", "ready", "building", "reviewing", "shipping"
 const CI = new Set(["unknown", "pending", "passed", "failed", "not_configured", "unavailable"]);
 const VERDICTS = new Set([null, "pass", "changes_requested", "blocked"]);
 const EDITABLE = new Set(["stage", "round", "repair_count", "max_repair_rounds",
-  "repair_limit_note", "comparison_base_sha", "candidate_sha", "reviewed_sha",
+  "ci_repair_count", "max_ci_repair_rounds", "repair_limit_note", "comparison_base_sha", "candidate_sha", "reviewed_sha",
   "review_verdict", "latest_build", "latest_review", "latest_ship", "pr_url",
   "publication_authorized", "publication_note", "ci_status", "ci_exception_note",
   "blocked_reason", "active_worker", "merge_sha"]);
@@ -60,19 +60,29 @@ function loadRun(run) {
   return { directory, status };
 }
 
+// Runs created before the separate CI repair budget have no CI counters.
+const withDefaults = (status) => ({ ci_repair_count: 0, max_ci_repair_rounds: 1, abandoned_head_sha: null, ...status });
+
+function isAncestor(repo, ancestor, descendant) {
+  try { execFileSync("git", ["-C", repo, "merge-base", "--is-ancestor", ancestor, descendant], { stdio: "ignore" }); return true; } catch { return false; }
+}
+
 function validate(next, directory, previous) {
   if (!STAGES.has(next.stage)) fail("Invalid stage");
   if (!CI.has(next.ci_status) || !VERDICTS.has(next.review_verdict)) fail("Invalid CI state or review verdict");
-  for (const key of ["round", "repair_count", "max_repair_rounds"]) {
+  for (const key of ["round", "repair_count", "max_repair_rounds", "ci_repair_count", "max_ci_repair_rounds"]) {
     if (!Number.isSafeInteger(next[key]) || next[key] < (key === "round" ? 1 : 0)) fail(`Invalid ${key}`);
   }
-  if (next.round !== next.repair_count + 1) fail("round must equal repair_count + 1");
-  if (next.repair_count < previous.repair_count) fail("Repair counters cannot be reset");
+  // Review repairs and CI repairs have separate budgets; every repair is a round.
+  if (next.round !== next.repair_count + next.ci_repair_count + 1) fail("round must equal repair_count + ci_repair_count + 1");
+  if (next.repair_count < previous.repair_count || next.ci_repair_count < previous.ci_repair_count) fail("Repair counters cannot be reset");
   if (next.repair_count > next.max_repair_rounds) fail("Automatic repair limit exhausted");
-  if (next.max_repair_rounds > previous.max_repair_rounds && !next.repair_limit_note?.trim()) {
+  if (next.ci_repair_count > next.max_ci_repair_rounds) fail("Automatic CI repair limit exhausted");
+  if ((next.max_repair_rounds > previous.max_repair_rounds || next.max_ci_repair_rounds > previous.max_ci_repair_rounds)
+    && (!next.repair_limit_note?.trim() || next.repair_limit_note === previous.repair_limit_note)) {
     fail("Record explicit user authorization before extending the repair limit");
   }
-  for (const key of ["initial_base_sha", "comparison_base_sha", "candidate_sha", "reviewed_sha", "merge_sha"]) {
+  for (const key of ["initial_base_sha", "comparison_base_sha", "candidate_sha", "reviewed_sha", "merge_sha", "abandoned_head_sha"]) {
     if ((key.endsWith("base_sha") || next[key] !== null) && !SHA.test(next[key] ?? "")) fail(`Invalid full SHA: ${key}`);
   }
   for (const key of ["repair_limit_note", "publication_note", "ci_exception_note", "blocked_reason", "active_worker"]) {
@@ -107,8 +117,14 @@ function validate(next, directory, previous) {
     if (!next.candidate_sha || next.review_verdict !== "pass" || next.reviewed_sha !== next.candidate_sha || !next.latest_review) {
       fail("Shipping requires a passing review of this exact candidate");
     }
-    if (git(next.worktree_path, "rev-parse", "HEAD") !== next.candidate_sha || git(next.worktree_path, "status", "--porcelain")) {
-      fail("Worktree must be clean at the reviewed candidate");
+    const head = git(next.worktree_path, "rev-parse", "HEAD");
+    // After a fallback, unpublished commits may sit on top of the candidate.
+    // They are never shipped: a push would publish them, so shipping is refused.
+    const fellBack = next.abandoned_head_sha === head && next.stage !== "shipping" && isAncestor(next.worktree_path, next.candidate_sha, head);
+    if ((head !== next.candidate_sha && !fellBack) || git(next.worktree_path, "status", "--porcelain")) {
+      fail(next.abandoned_head_sha && next.stage === "shipping"
+        ? "Cannot ship after a fallback: the branch holds abandoned commits"
+        : "Worktree must be clean at the reviewed candidate");
     }
   }
   if (next.stage === "ready_for_human") {
@@ -152,7 +168,7 @@ function initialize(args) {
   fs.mkdirSync(path.dirname(directory), { recursive: true, mode: 0o700 });
   fs.mkdirSync(directory, { mode: 0o700 }); // Exclusive: never overwrite an existing run.
   fs.mkdirSync(path.join(directory, "evidence"), { mode: 0o700 });
-  for (const name of ["task.md", "friction.md"]) {
+  for (const name of ["task.md", "friction.md", "ledger.md"]) {
     fs.copyFileSync(path.join(SKILL, "assets", name), path.join(directory, name), fs.constants.COPYFILE_EXCL);
   }
   const status = {
@@ -160,7 +176,8 @@ function initialize(args) {
     base_ref: base, initial_base_sha: baseSha, comparison_base_sha: baseSha,
     worktree_path: path.join(root, ".worktrees", repoKey, id),
     branch: `factory/${id}-${short}`, stage: "planning", round: 1,
-    repair_count: 0, max_repair_rounds: 3, repair_limit_note: null,
+    repair_count: 0, max_repair_rounds: 3, ci_repair_count: 0, max_ci_repair_rounds: 1,
+    repair_limit_note: null, abandoned_head_sha: null,
     approved_task_sha256: null, approval_note: null,
     candidate_sha: null, reviewed_sha: null, review_verdict: null,
     latest_build: null, latest_review: null, latest_ship: null,
@@ -175,8 +192,14 @@ function initialize(args) {
   process.stdout.write(`${JSON.stringify({ run_dir: directory, warnings, ...status }, null, 2)}\n`);
 }
 
+const MUTATION_OPTIONS = {
+  approve: ["--note"],
+  update: ["--patch"],
+  fallback: ["--to", "--review", "--note"],
+};
+
 function mutate(command, args) {
-  const opts = options(args, ["--run", "--expected-revision", command === "approve" ? "--note" : "--patch"]);
+  const opts = options(args, ["--run", "--expected-revision", ...MUTATION_OPTIONS[command]]);
   const { directory } = loadRun(opts.run);
   const revision = Number(requireValue(opts["expected-revision"], "--expected-revision"));
   if (!Number.isSafeInteger(revision) || revision < 0) fail("Invalid expected revision");
@@ -186,7 +209,7 @@ function mutate(command, args) {
     throw error;
   }
   try {
-    const { status } = loadRun(directory);
+    const status = withDefaults(loadRun(directory).status);
     if (status.revision !== revision) fail(`Stale revision: expected ${revision}, actual ${status.revision}`);
     let next = { ...status };
     if (command === "approve") {
@@ -202,11 +225,32 @@ function mutate(command, args) {
       next.ci_status = "unknown";
       validate(next, directory, status);
       fs.writeFileSync(path.join(directory, next.approval_note), note, { flag: "wx", mode: 0o600 });
+    } else if (command === "fallback") {
+      // Return to an earlier candidate that already passed review, for example
+      // the published PR head, when later local repairs are abandoned.
+      const to = requireValue(opts.to, "--to");
+      if (!SHA.test(to)) fail("--to must be a full SHA");
+      const note = fs.readFileSync(requireValue(opts.note, "--note"), "utf8");
+      if (!note.trim()) fail("Fallback note is empty");
+      const reviewName = requireValue(opts.review, "--review");
+      next = { ...status, latest_review: reviewName };
+      validate({ ...next, stage: "paused" }, directory, status); // Checks the handoff path stays inside the run.
+      const review = fs.readFileSync(path.join(directory, reviewName), "utf8");
+      if (!review.includes(to) || !/^\s*-?\s*Verdict:\s*`?pass\b/m.test(review)) fail("Review handoff must name this SHA and a pass verdict");
+      const head = git(status.worktree_path, "rev-parse", "HEAD");
+      if (!isAncestor(status.worktree_path, to, head)) fail("Fallback target must be the worktree HEAD or one of its ancestors");
+      next = { ...next, candidate_sha: to, reviewed_sha: to, review_verdict: "pass", ci_status: "unknown",
+        ci_exception_note: null, abandoned_head_sha: head === to ? null : head, stage: "paused", active_worker: null,
+        blocked_reason: `Fell back to ${to}; record its CI and the next stage with update.` };
+      validate(next, directory, { ...status, candidate_sha: to, reviewed_sha: to, review_verdict: "pass", ci_status: "unknown" });
+      fs.writeFileSync(path.join(directory, `fallback-${status.revision + 1}.md`), note, { flag: "wx", mode: 0o600 });
     } else {
       const patch = JSON.parse(fs.readFileSync(requireValue(opts.patch, "--patch"), "utf8"));
       if (!patch || Array.isArray(patch) || typeof patch !== "object") fail("Patch must be a JSON object");
       for (const key of Object.keys(patch)) if (!EDITABLE.has(key)) fail(`Field is not editable: ${key}`);
       next = { ...status, ...patch };
+      // A new candidate supersedes a fallback: its HEAD must match exactly again.
+      if (next.candidate_sha !== status.candidate_sha) next.abandoned_head_sha = null;
       validate(next, directory, status);
     }
     next.revision = status.revision + 1;
@@ -225,10 +269,11 @@ try {
       "             show --run PATH\n" +
       "             approve --run PATH --expected-revision N --note FILE\n" +
       "             update --run PATH --expected-revision N --patch FILE\n" +
+      "             fallback --run PATH --expected-revision N --to SHA --review HANDOFF --note FILE\n" +
       "Records only: no project edits, worktree creation, agent execution, or publication.");
   } else if (command === "init") initialize(args);
   else if (command === "show") console.log(JSON.stringify(loadRun(options(args, ["--run"]).run).status, null, 2));
-  else if (["approve", "update"].includes(command)) mutate(command, args);
+  else if (Object.prototype.hasOwnProperty.call(MUTATION_OPTIONS, command)) mutate(command, args);
   else fail(`Unknown command: ${command}`);
 } catch (error) {
   console.error(`factory-run: ${error.message}`);
