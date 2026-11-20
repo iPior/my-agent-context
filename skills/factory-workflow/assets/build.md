@@ -22,10 +22,19 @@ lockfile, and production-footprint effects.
 
 {{DECISIONS_WITH_REASONS_OR_NONE}}
 
+## Deviations from the dispatch
+
+Where the dispatch's suggested implementation could not reach its required
+outcome, what you did instead and why. For a repeated finding, what is
+materially different from the earlier attempt.
+
+{{DEVIATIONS_OR_NONE}}
+
 ## Acceptance evidence
 
 Final verification ran on the committed candidate; each log starts with the
-commit it ran against.
+commit it ran against. Report only measured results; write "not measured"
+rather than inferring. List the saved failing (red) runs.
 
 | Criterion | Before | After | Evidence path / command / exit result |
 | --- | --- | --- | --- |

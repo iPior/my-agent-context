@@ -24,6 +24,21 @@ or changes dependencies, plan a check of the lockfile diff and of what reaches
 the production install or image. Note the user's standing rules, such as
 attribution and writing style, so they reach every worker.
 
+Fill the task's "Run it by hand" section from the project's config files, not
+from memory: how to run one test or scenario (check the runner's real filter
+syntax), how to start each server for exploration with its working directory,
+ports and required variables, the fixture identities or test-session method
+for sign-in, variables that offline commands such as code generators still
+read, and the names and order of the CI checks expected on the PR head,
+including jobs that start only after another finishes.
+
+Record the blast radius while you read the code: what a merge affects
+(components, routes, screens, users), schema and data changes with their
+compatibility and rollback, contracts and who consumes them, deploy order and
+steps outside the repository, how a failure would show and how to roll back,
+and what is deliberately left untouched. Mark what you verified and what you
+inferred. The reviewer checks it against the diff and the PR carries it.
+
 Reuse decisions already made. Ask only about uncertainty that changes what gets
 built, the approach, or how success will be judged. Label proposals and
 assumptions; do not convert them into user requirements.
@@ -44,6 +59,7 @@ Fill the task template with:
   reviewers can rely on CI for those instead of re-running them.
 - Existing tests the task will change, each with its old and new expectation.
 - The proposed base ref and known pre-existing failures or setup needs.
+- The "Run it by hand" commands and the blast radius described above.
 
 Find the existing tests the task intentionally contradicts. For each behavior
 the task changes, such as an error code, a validation rule, a response shape,
@@ -81,6 +97,8 @@ is approved as written. Present those proposals as the decisions to make. If
 the user changes one, edit the task before recording approval.
 
 Present the completed plan and acceptance criteria. Wait for an explicit answer.
+You may ask for publication authority in the same question: it is recorded in
+status, not in `task.md`, so answering it does not change the hashed file.
 If the user has already explicitly approved this concrete plan in the current
 session, preserve that approval instead of requesting it again.
 The coordinator records that answer and the hash of the approved `task.md`.

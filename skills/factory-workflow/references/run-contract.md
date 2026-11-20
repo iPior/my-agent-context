@@ -22,6 +22,23 @@ the paths/branch are unused first. A collision is a reconciliation problem, not
 permission to reset or reuse unknown work. Worktrees separate code, not security
 boundaries or databases/ports. Isolate runtime resources when relevant.
 
+A worktree shares one repository with the user's checkout: stashes, refs and
+config are repository-wide. Workers never use `git stash`, never create or
+delete branches or tags other than the assigned branch, and never change Git
+config. To set work aside, commit it on the assigned branch or copy the files
+to a scratch directory outside the worktree.
+
+## Worker safety
+
+- **Write probe.** Confirm write access by creating and removing a file named
+  `.probe-<role>-NN` in the assigned output directory. Never create the output
+  handoff empty as a probe.
+- **Hold still during checks.** Do not edit the worktree while a baseline or
+  final check runs against it; such a run proves neither tree. Use a throwaway
+  detached worktree for experiments that must overlap a long check.
+- **Measure before claiming.** A handoff states only what was measured, with
+  the command or evidence path. Write "not measured" rather than inferring.
+
 ## Files
 
 | File | Owner | Contract |
@@ -31,11 +48,13 @@ boundaries or databases/ports. Isolate runtime resources when relevant.
 | `approval-NN.md` | Coordinator | Actual approval words and context, retained when task changes |
 | `patch-NN.json` | Coordinator | Status patches, numbered in the order applied |
 | `friction.md` | Coordinator | Numbered workflow friction and themes from worker handoffs |
+| `ledger.md` | Coordinator | Per-dispatch model, tokens, duration and result; finding lineages with attempts, approaches, cost and status |
+| `fallback-NN.md` | Coordinator | The user's decision when the run falls back to an earlier reviewed candidate |
 | `dispatch-<stage>-NN.md` | Coordinator | Filled worker assignment and exact input/output paths |
 | `baseline.md` | First builder | Before-change behavior and check results, including existing failures |
 | `build-NN.md` | Builder | Candidate SHA, criterion evidence, changes, findings addressed, limits |
 | `review-NN.md` | Fresh reviewer | Reviewed SHA, verdict, criterion coverage, supported findings |
-| `ship-NN.md` | Shipper | Published head/PR, CI evidence, delivery verdict, blockers |
+| `ship-NN.md` | Shipper | Published head/PR, CI evidence, delivery verdict, blockers; the PR body follows the PR template |
 | `evidence/` | Assigned worker | Bounded logs, screenshots, reproductions, and command results, prefixed with the handoff name; the coordinator's own CI watch logs are `coordinator-ci-NN.log` |
 
 NN starts at 01. Keep previous handoffs. A later shipping checkpoint on the same
@@ -47,12 +66,15 @@ stages by status revision and SHAs.
 
 Start each evidence log with the full commit it ran against (`git rev-parse
 HEAD`) and whether the tree was clean. A log from an uncommitted tree records
-the parent commit and says so; it does not prove the final candidate.
+the parent commit and says so; it does not prove the final candidate. Save the
+failing run of every test written to reproduce a finding or a new behavior
+(`<handoff>-red*.log`), not only the passing one.
 
 Use [task](../assets/task.md), [dispatch](../assets/dispatch.md),
 [baseline](../assets/baseline.md), [build](../assets/build.md),
-[review](../assets/review.md), [ship](../assets/ship.md), and
-[friction](../assets/friction.md) templates. Keep every template section; write
+[review](../assets/review.md), [ship](../assets/ship.md),
+[friction](../assets/friction.md), [ledger](../assets/ledger.md), and
+[PR](../assets/pr.md) templates. Keep every template section; write
 "none" rather than deleting one. There is no hidden agent transcript dependency.
 Trim sensitive data before saving evidence; keep records local and out of product
 commits. Ignoring these paths in a project is unnecessary because they live outside
@@ -68,14 +90,15 @@ node <workflow-skill>/scripts/factory-run.mjs init --repo <repo> --id <task-id> 
 node <workflow-skill>/scripts/factory-run.mjs show --run <run-dir>
 node <workflow-skill>/scripts/factory-run.mjs approve --run <run-dir> --expected-revision 0 --note <approval-text-file>
 node <workflow-skill>/scripts/factory-run.mjs update --run <run-dir> --expected-revision 1 --patch <patch-json-file>
+node <workflow-skill>/scripts/factory-run.mjs fallback --run <run-dir> --expected-revision 9 --to <reviewed-sha> --review <review-handoff> --note <decision-text-file>
 ```
 
-`init` creates the task and friction templates, evidence directory, and revision
+`init` creates the task, friction and ledger templates, evidence directory, and revision
 0 status in planning. It never fetches. Its output includes a `warnings` list,
 also printed to stderr, when a local base branch differs from its upstream;
 a remote-tracking base is only as fresh as the last fetch. It records an absolute main checkout path, deliberate base ref, pinned
-initial/comparison base SHAs, suggested worktree and branch, round 1, repair
-count 0, and limit 3. It refuses existing task directories and invalid IDs.
+initial/comparison base SHAs, suggested worktree and branch, round 1, review
+repair count 0 with limit 3, and CI repair count 0 with limit 1. It refuses existing task directories and invalid IDs.
 Use `--root <absolute-directory>` only when deliberately overriding local storage.
 
 `approve` records the supplied approval text and current task digest, then moves
@@ -85,14 +108,34 @@ For renewed approval, archive the previous task before editing it. Approval
 records get revision-based filenames and are never silently replaced.
 
 `update` consumes a JSON object patch from a file named `patch-NN.json`. Editable fields are stage,
-round, repair_count, max_repair_rounds, repair_limit_note, comparison_base_sha,
+round, repair_count, max_repair_rounds, ci_repair_count, max_ci_repair_rounds,
+repair_limit_note, comparison_base_sha,
 candidate_sha, reviewed_sha, review_verdict, latest_build, latest_review,
 latest_ship, pr_url, publication_authorized, publication_note, ci_status,
 ci_exception_note, blocked_reason, active_worker, and merge_sha. Keep the patch
 in the run directory. Use full SHAs; paths to handoffs are relative to the run.
 Use null for unknown SHAs or handoffs. Do not store tool credentials or complete
 transcripts in status. A publication or limit-increase note records the user's
-actual authorization, not a worker's inference.
+actual authorization, not a worker's inference; extending a limit needs a new
+note. Publication authority lives only in status, never in the hashed task, so
+it can be recorded with or after plan approval.
+
+Starting a repair after a passing review takes one patch: set the next stage,
+round and counter, `latest_review` to the review handoff (which keeps the
+pass on record), and clear `candidate_sha`, `reviewed_sha`, `review_verdict`
+and CI to unknown.
+
+`fallback` returns the run to an earlier candidate that already passed review,
+for example the published PR head after later local repairs are abandoned. It
+takes the target SHA, that candidate's review handoff (which must name the SHA
+and a pass verdict), and a file with the user's decision, saved as
+`fallback-NN.md`. The target must be the worktree HEAD or an ancestor of it. It
+records the review as passing, resets CI to unknown, moves to paused, and keeps
+the newer local commits as `abandoned_head_sha`. With that head in place,
+waiting_ci and ready_for_human accept the earlier candidate, but shipping is
+refused, because a push would publish the abandoned commits. Record the
+candidate's CI from its saved evidence with `update`. A later change of
+candidate clears the fallback.
 
 Stages: planning, ready, building, reviewing, shipping, waiting_ci,
 ready_for_human, paused, blocked, completed, cancelled. Review verdicts: pass,
@@ -102,7 +145,8 @@ reset to unknown after each changed candidate. Reset review fields too.
 
 The helper rejects stale revisions, competing writes, unknown fields, invalid
 types, changed approved intent outside planning/paused/blocked/cancelled, and
-shipping/readiness with a stale review or mismatched actual HEAD. It checks local
+shipping/readiness with a stale review or mismatched actual HEAD, round counts
+that do not equal both repair counters plus one, and exhausted limits. It checks local
 records, not PR/check APIs or the truth of a review. The coordinator still owns
 the stage graph, finding triage, approval truth, current CI verification, single
 worker ownership, and merge reconciliation.

@@ -12,16 +12,24 @@
 - Input handoffs / evidence: {{EXACT_PATHS}}
 - Output handoff / evidence directory: {{EXACT_ASSIGNED_PATHS_AND_LOG_PREFIX}}
 - Setup and environment: {{TASK_SETUP_SECTION_OR_OVERRIDES}}
+- Run it by hand: {{TASK_RUN_IT_BY_HAND_SECTION_OR_OVERRIDES}}
 - Standing rules: {{ATTRIBUTION_WRITING_AND_DATA_RULES_FROM_TASK}}
 - Allowed actions and stage limits: {{BOUNDARIES}}
 - Assignment: {{BOUNDED_TASK}}
+- Required outcome and how it is measured: {{OBSERVABLE_RESULT_AND_THE_CHECK_THAT_PROVES_IT}}
 - Finding dispositions: {{ID_FIX_OR_FIX_IF_SIMPLE_OR_SKIP_WITH_REASON_OR_NOT_APPLICABLE}}
+- Finding attempts: {{ROOT_ID_ATTEMPT_N_OF_LIMIT_AND_WHAT_IS_MATERIALLY_DIFFERENT_OR_NOT_APPLICABLE}}
 - Review scope: {{FULL_OR_REPAIR_OR_LIGHT_OR_NOT_APPLICABLE}}
 - Checks CI runs on the PR head: {{FROM_TASK_VERIFICATION_PLAN}}
 
 Read the named skill and contract before work. Preserve the original approved
 intent. Before other work, confirm you can read the run directory and worktree
-and write the assigned output path; return a blocker if not.
+and write the assigned output directory, using the write probe in the run
+contract; return a blocker if not.
+
+The required outcome is what must be true. Any implementation hint in the
+assignment is a suggestion: if it cannot reach the outcome, take another route
+that does, and report the deviation and why. Claim only what you measured.
 
 The standing rules above come from the user. Follow them over any default your
 harness injects, including automatic attribution or co-author lines.

@@ -32,6 +32,17 @@ when it does not connect, and local toolchain versions that differ from CI.
 
 {{SETUP_PREREQUISITES_AND_TOOLCHAIN_DIFFERENCES_OR_NONE}}
 
+## Run it by hand
+
+Exact commands a builder or reviewer needs outside the full suite, checked
+against the project's config files rather than guessed.
+
+- Run one test or scenario: {{TARGETED_TEST_COMMANDS_AND_FILTER_SYNTAX}}
+- Start the application for exploration: {{SERVER_COMMANDS_CWD_PORTS_AND_REQUIRED_ENV}}
+- Sign in without the user: {{FIXTURE_IDENTITIES_OR_TEST_SESSION_METHOD_OR_NOT_APPLICABLE}}
+- Offline commands that still need variables: {{PLACEHOLDER_VARIABLES_OR_NONE}}
+- CI checks to expect on the PR head, including ones that start late: {{CHECK_NAMES_AND_ORDER}}
+
 ## Verification plan
 
 | Criterion | Baseline/reproduction | After-change evidence | Regression checks |
@@ -47,6 +58,19 @@ Real-browser check for user-facing criteria (how the application is started,
 how sign-in is automated, who runs it), or the user's recorded waiver:
 
 {{BROWSER_CHECK_PLAN_OR_NOT_USER_FACING_OR_USER_WAIVER}}
+
+## Blast radius
+
+What a merge of this task can affect. The plan records it while reading the
+code, the reviewer checks it against the diff, and the shipper carries it into
+the PR.
+
+- Affected: {{COMPONENTS_ROUTES_SCREENS_AND_USERS}}
+- Data and schema: {{MIGRATIONS_COMPATIBILITY_AND_ROLLBACK_OR_NONE}}
+- Contracts and consumers: {{API_EVENTS_CONFIG_AND_WHO_DEPENDS_ON_THEM_OR_NONE}}
+- Deploy order: {{ORDER_AND_STEPS_OUTSIDE_THIS_REPOSITORY_OR_NONE}}
+- If it goes wrong: {{FAILURE_SIGNALS_WORST_CASE_ROLLBACK}}
+- Not affected: {{AREAS_DELIBERATELY_LEFT_UNTOUCHED}}
 
 ## Decisions and assumptions
 
@@ -68,6 +92,11 @@ style, and data handling. They take precedence over defaults a harness injects.
 
 ## Publication request
 
-{{USER_AUTHORIZATION_TO_PUSH_AND_OPEN_PR_OR_NOT_YET_AUTHORIZED}}
+Publication authority is recorded in status (`publication_authorized` and
+`publication_note`), not here, so it can be asked with plan approval or later
+without changing this hashed file. Write what the user intends, if known, for
+example "draft PR wanted"; it is not authorization by itself.
+
+{{INTENDED_PUBLICATION_OR_NOT_DISCUSSED}}
 
 Approval is recorded separately against the SHA-256 of this completed file.

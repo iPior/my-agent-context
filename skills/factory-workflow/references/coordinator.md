@@ -34,10 +34,15 @@ worktree, input handoffs, output handoff, and evidence directory. Specify the
 pinned base/candidate commits, permitted actions, and whether it must return
 before another stage starts. Provide the original approved task even on repairs.
 
-Copy the task's setup notes and standing rules into every dispatch. Harnesses
-may inject their own defaults, such as attribution or co-author lines, into a
-worker's context; a worker that never saw the user's rule will follow the
-default. State that the user's rules win.
+State each assignment as a required outcome and the check that proves it, not
+as a structure to build. A suggested implementation is a hint the worker may
+replace when it cannot reach the outcome; prescribe a structure only after
+verifying that it works. Tell workers to claim only what they measured.
+
+Copy the task's setup notes, "Run it by hand" commands, and standing rules into
+every dispatch. Harnesses may inject their own defaults, such as attribution or
+co-author lines, into a worker's context; a worker that never saw the user's
+rule will follow the default. State that the user's rules win.
 
 Do not fork the builder transcript into a reviewer. Pass raw requirements,
 code, and evidence; the build summary is a fallible claim, not a verdict. Ask
@@ -65,10 +70,11 @@ Keep the independent evidence and cut the duplication.
   harness chose). Use the strongest available model (for example Claude Opus)
   for planning, the initial build, and every review: those decide what the
   factory catches. Use a fast model (for example Claude Sonnet) for shipping,
-  and for repair builds whose findings are small and specific and touch no
-  authorization, data or schema. Write those dispatches so they can be
-  followed without inference. Say in the final report which stage ran on
-  which model.
+  and for a first repair whose findings are small and specific and touch no
+  authorization, data or schema. Choose by difficulty, not size: a repair that
+  replaces an approach that already failed goes to the strongest model. Write
+  fast-model dispatches so they can be followed without inference. Record each
+  dispatch's model, tokens and duration in the run's ledger as it returns.
 - **Each check runs once per owner.** The builder runs the full suite once on
   the final committed candidate, and targeted tests while iterating. The
   reviewer does not repeat a full check that CI runs on the PR head (listed in
@@ -108,8 +114,32 @@ or skip with a reason. Do not paraphrase a finding's extent. A listed ID means
 the whole finding as the reviewer wrote it; name any excluded part explicitly.
 
 Reviewers mark findings blocking or nonblocking. A pass may carry nonblocking
-findings: either list them as follow-ups in the PR and final report, or spend a
-repair round when they are cheap and in scope. Say which you chose and why.
+findings. Triage them yourself, then tell the user your recommendation for each
+(fix in one batched repair round, or list as a follow-up) and act on their
+answer; never defer or repair them silently. Put all nonblocking findings you
+fix from one review into a single repair round rather than one round each.
+Never defer a finding to keep a round in reserve for CI: CI repairs have their
+own budget (see "Repair and escalation"). Use what the user has said about
+upcoming changes, such as a planned rework of the affected area.
+
+## Cap each finding
+
+Track every finding as a lineage in the run's [ledger](../assets/ledger.md).
+A recurrence or partial fix reported in a later review keeps the root ID; the
+reviewer names it ("R4-F1, recurs R3-F1"). Count attempts per lineage:
+
+- A nonblocking lineage gets one repair attempt. If the next review still
+  reports it, record it as a follow-up and move on. A further attempt needs
+  the user's go-ahead, and its dispatch must state an approach materially
+  different from every earlier attempt.
+- A blocking lineage gets two attempts, the second materially different from
+  the first, then the run pauses with the evidence and the smallest decision
+  needed.
+- "Materially different" means a different mechanism, not new parameters for
+  the same one. If you cannot name the difference, pause instead of
+  dispatching.
+
+These caps apply inside the round budget, never on top of it.
 
 Set the review scope in every review dispatch, sized to the risk:
 
@@ -145,17 +175,27 @@ never overwrite someone else's update or restart a live worker blindly.
 
 ## Repair and escalation
 
-Allow three automatic repair rounds total across review and CI failures. The
-initial build is round 1 with repair_count 0; each repair increments both round
-and repair_count before dispatch. Do not reset counters when the stage changes
-or a replacement builder starts. Keep prior handoffs and findings.
+Allow three automatic repair rounds for review findings (`repair_count`) and,
+separately, one automatic repair round for a CI code failure
+(`ci_repair_count`). The initial build is round 1; each repair increments the
+round and the matching counter before dispatch, so round always equals both
+counters plus one. A CI repair still goes through build and a fresh review, and
+its review does not consume a review repair. A second CI code failure pauses
+for the user. Do not reset counters when the stage changes or a replacement
+builder starts. Keep prior handoffs and findings.
 
-Pause earlier when the same finding recurs without a materially different fix,
+Pause earlier when a finding lineage reaches its cap (see "Cap each finding"),
 or when the task needs a product decision, a material scope/architecture change,
 a critical risk decision, or missing external access. Report the evidence and
-smallest decision needed. Extend the repair limit only with explicit user
+smallest decision needed. Extend either limit only with explicit user
 authorization recorded in the run. Budget pending CI waits and infrastructure
 retries separately; they do not justify repeated code repairs.
+
+To stop at an earlier reviewed candidate, such as the published PR head, when
+later local repairs are abandoned, use the helper's `fallback` command with
+that candidate's passing review handoff and the user's decision. The local
+commits stay on the branch untouched and are never pushed; record the earlier
+candidate's CI from saved evidence, then continue to ready_for_human.
 
 Routine in-scope fixes do not need fresh plan approval. For changed intent,
 archive the previous task and affected records before replacing them, return to
@@ -168,6 +208,12 @@ Record the user's authorization to publish the task branch and PR, including
 any draft requirement. Honor authorization already supplied in the request;
 do not ask again. Planning approval by itself covers implementation, not an
 unspecified external publication. Keep merge authority with the user.
+
+Make the PR the one place the user needs to read. The shipper fills the
+[PR template](../assets/pr.md) from the approved task, the reviewed handoffs and
+the ledger, including the blast radius the plan recorded and the reviewer
+checked. Pass the ledger's current totals in the shipping dispatch, and update
+the PR body when a later candidate or repair changes them.
 
 Do not deploy, auto-merge, force-push, discard edits, or delete worktrees as a
 side effect of this workflow. If ordinary push fails because the remote advanced,
@@ -185,6 +231,11 @@ Before the final report, read each handoff's workflow friction section and
 summarize recurring themes in the run's `friction.md`, including your own
 coordination mistakes. Report them to the user; change skills only in their
 source repository, outside the run.
+
+The final report and the PR's "Factory run" section come from the ledger:
+each stage with its model, tokens and duration, the totals, repair rounds used
+of each limit, and the attempts and cost per finding lineage. Write "not
+reported" where the harness gave no figure; never estimate.
 
 Retain run records and the worktree by default. If cleanup is requested later,
 verify no live worker or unlanded/uncommitted work depends on the worktree and

@@ -17,7 +17,11 @@ Do not claim independent review in the builder's own session.
    Verify the task digest and candidate HEAD. Inspect the actual diff and
    surrounding code. Use the build handoff as claims to check.
 2. Evaluate scope, acceptance coverage, correctness, regressions, maintainability,
-   data handling, and relevant security concerns. Check that tests have not been
+   data handling, and relevant security concerns. Check the task's blast radius
+   against the actual diff: every affected component, schema change, contract
+   and deploy step it names, and anything the diff touches that it omits. A
+   wrong or missing blast radius claim is a finding, because the PR carries it
+   to the user. Check that tests have not been
    weakened and evidence belongs to this candidate. Compare every changed
    existing test expectation with the task's list of tests it changes; an
    unlisted change needs a reason in the build handoff and your judgment.
@@ -96,7 +100,10 @@ turns out riskier than its scope (authorization, data, schema, or broader than
 described), say so and review it at the depth it needs.
 
 Use stable finding IDs such as R1-F1. Compare prior findings during re-review and
-identify resolutions or recurrences. Cosmetic preferences are nonblocking unless
+identify resolutions or recurrences. A recurrence or partial fix of an earlier
+finding gets a new ID that names its root ("R4-F1, recurs R3-F1"), so the
+coordinator can count attempts per lineage. Say whether the repair was a
+materially different approach or another adjustment of the same one. Cosmetic preferences are nonblocking unless
 the approved task or project standards make them requirements.
 
 Route clear in-scope defects as `changes_requested` for automatic repair.
