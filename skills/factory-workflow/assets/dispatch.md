@@ -10,6 +10,7 @@
 - Base / candidate SHA: {{FULL_SHAS_OR_NO_CANDIDATE_YET}}
 - Previous candidate SHA: {{FULL_SHA_FOR_REPAIR_OR_REREVIEW_OR_NOT_APPLICABLE}}
 - Input handoffs / evidence: {{EXACT_PATHS}}
+- Exploration scripts: {{RUN_EXPLORE_DIRECTORY_AND_SCENARIOS_TO_RERUN_OR_NOT_APPLICABLE}}
 - Output handoff / evidence directory: {{EXACT_ASSIGNED_PATHS_AND_LOG_PREFIX}}
 - Setup and environment: {{TASK_SETUP_SECTION_OR_OVERRIDES}}
 - Run it by hand: {{TASK_RUN_IT_BY_HAND_SECTION_OR_OVERRIDES}}
@@ -18,6 +19,7 @@
 - Assignment: {{BOUNDED_TASK}}
 - Required outcome and how it is measured: {{OBSERVABLE_RESULT_AND_THE_CHECK_THAT_PROVES_IT}}
 - Finding dispositions: {{ID_FIX_OR_FIX_IF_SIMPLE_OR_SKIP_WITH_REASON_OR_NOT_APPLICABLE}}
+- Case family to cover: {{SIBLING_CASES_OF_EACH_STATE_FOCUS_OR_TIMING_FINDING_OR_NOT_APPLICABLE}}
 - Finding attempts: {{ROOT_ID_ATTEMPT_N_OF_LIMIT_AND_WHAT_IS_MATERIALLY_DIFFERENT_OR_NOT_APPLICABLE}}
 - Review scope: {{FULL_OR_REPAIR_OR_LIGHT_OR_NOT_APPLICABLE}}
 - Checks CI runs on the PR head: {{FROM_TASK_VERIFICATION_PLAN}}

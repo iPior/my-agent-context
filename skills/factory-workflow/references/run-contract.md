@@ -38,6 +38,16 @@ to a scratch directory outside the worktree.
   detached worktree for experiments that must overlap a long check.
 - **Measure before claiming.** A handoff states only what was measured, with
   the command or evidence path. Write "not measured" rather than inferring.
+- **Long checks in the background.** Start any check that can run longer than
+  about three minutes (full suites, e2e runs, builds) in the background
+  yourself and wait for its completion notice. Some harnesses move a long
+  foreground command to the background on their own, which splits one check
+  into two notices and makes its exit status easy to miss.
+- **Name tests by behavior.** Test names describe the behavior they check,
+  never only a finding ID: IDs such as R3-F1 restart in every run, so a
+  filter on one also matches older tests. When an ID helps, add it after the
+  behavior and with the run ID, for example `"keeps focus on the next list
+  (shared-lists R3-F1)"`.
 
 ## Files
 
@@ -56,6 +66,8 @@ to a scratch directory outside the worktree.
 | `review-NN.md` | Fresh reviewer | Reviewed SHA, verdict, criterion coverage, supported findings |
 | `ship-NN.md` | Shipper | Published head/PR, CI evidence, delivery verdict, blockers; the PR body follows the PR template |
 | `evidence/` | Assigned worker | Bounded logs, screenshots, reproductions, and command results, prefixed with the handoff name; the coordinator's own CI watch logs are `coordinator-ci-NN.log` |
+| `explore/` | Builders and reviewers | Reusable exploration scripts shared by every round, with a README listing their scenarios; see "Exploration scripts" |
+| `snapshots/` | Status helper | Read-only copies of earlier candidates made by `snapshot` |
 
 NN starts at 01. Keep previous handoffs. A later shipping checkpoint on the same
 candidate gets an unused shipping filename; do not overwrite earlier CI evidence.
@@ -91,6 +103,7 @@ node <workflow-skill>/scripts/factory-run.mjs show --run <run-dir>
 node <workflow-skill>/scripts/factory-run.mjs approve --run <run-dir> --expected-revision 0 --note <approval-text-file>
 node <workflow-skill>/scripts/factory-run.mjs update --run <run-dir> --expected-revision 1 --patch <patch-json-file>
 node <workflow-skill>/scripts/factory-run.mjs fallback --run <run-dir> --expected-revision 9 --to <reviewed-sha> --review <review-handoff> --note <decision-text-file>
+node <workflow-skill>/scripts/factory-run.mjs snapshot --run <run-dir> --sha <earlier-candidate-sha>
 ```
 
 `init` creates the task, friction and ledger templates, evidence directory, and revision
@@ -155,6 +168,56 @@ Updates use an exclusive `.status.lock` directory and atomic status replacement.
 If interrupted during a write, inspect the lock and temporary files, confirm
 there is no live writer, then remove only the stale lock and retry with the
 current revision. Never automatically break a lock by guessing elapsed time.
+
+## Earlier candidates
+
+Red runs and before/after browser checks need an earlier candidate's source.
+Get it with the helper's `snapshot` command, not a second Git worktree:
+
+```sh
+node <workflow-skill>/scripts/factory-run.mjs snapshot --run <run-dir> --sha <full-sha>
+```
+
+It extracts that commit with `git archive` into
+`<run-dir>/snapshots/<first 12 characters>[-<label>]/`, links each
+`node_modules` directory of the task worktree into the copy so it runs without
+an install, and prints the path. It writes no refs, worktree records or
+config. An existing snapshot is refused with its path: reuse an unlabelled one
+read-only, since another worker may be running it. To run the earlier code
+against the candidate's new tests (a red run), make your own copy with
+`--label <your handoff name>`, such as `--label review-02`, and copy those
+test files into it. The links point into the task worktree, so never install
+or delete dependencies through a snapshot. For a mutation check that needs real
+Git operations, a throwaway `git worktree add --detach` is still allowed;
+remove it with `git worktree remove` before returning.
+
+## Exploration scripts
+
+Reviewers and builders keep reusable exploration scripts, such as scripted
+browser sessions with two users or API probes, in `<run-dir>/explore/`, not in
+a per-dispatch scratch directory. `init` creates it with a README. Each script
+takes its evidence prefix and server state directory as arguments, starts
+fresh servers per scenario through the server helper (so every scenario has
+fresh data), and imports the project's browser library by the absolute path
+the task gives. A worker that adds a scenario lists it in the README with its
+round; nobody deletes another worker's scenario. A later dispatch reruns the
+relevant scenarios before writing new ones.
+
+## CI wait
+
+The coordinator waits for CI with the bundled script, in the background:
+
+```sh
+node <workflow-skill>/scripts/factory-ci.mjs wait --repo <owner/name> --sha <full-sha> \
+  --expect <checks> [--timeout 1800] [--interval 30] --log <run-dir>/evidence/coordinator-ci-NN.log
+```
+
+It uses the gh CLI's existing login to read the GitHub check runs of that
+commit (never another commit's), waits until at least `--expect` exist and all
+completed, and exits 0 when all passed (skipped and neutral count as passed),
+1 when one failed or the API failed three times in a row, and 2 when still
+pending at the timeout. It saves the final states as JSON to the log, refusing
+an existing log. It only reads; it never reruns or changes checks or the PR.
 
 ## Server helper
 

@@ -55,6 +55,7 @@ try {
   assert.deepEqual(initial.warnings, []);
   assert.match(fs.readFileSync(path.join(run, "friction.md"), "utf8"), /friction log/);
   assert.match(fs.readFileSync(path.join(run, "ledger.md"), "utf8"), /## Findings/);
+  assert.match(fs.readFileSync(path.join(run, "explore", "README.md"), "utf8"), /Exploration scripts/);
   assert.equal(initial.ci_repair_count, 0);
   assert.equal(initial.max_ci_repair_rounds, 1);
   assert.equal(Object.prototype.hasOwnProperty.call(read(), "warnings"), false);
@@ -93,6 +94,25 @@ try {
   fs.writeFileSync(candidateFile, "implemented\n");
   execFileSync("git", ["-C", initial.worktree_path, "commit", "-am", "Implement fixture"], { stdio: "pipe" });
   const candidate = execFileSync("git", ["-C", initial.worktree_path, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  // A snapshot of the base for red runs: a plain copy with the worktree's
+  // dependencies linked, and no new worktree record or ref in the repository.
+  const dependencies = path.join(initial.worktree_path, "node_modules");
+  fs.mkdirSync(path.join(dependencies, "fixture-dep"), { recursive: true });
+  const worktreesBefore = git("worktree", "list", "--porcelain");
+  const refsBefore = git("for-each-ref");
+  helper(["snapshot", "--run", run, "--sha", "HEAD"], /full SHA/);
+  const copy = JSON.parse(helper(["snapshot", "--run", run, "--sha", base]));
+  assert.equal(copy.snapshot, path.join(run, "snapshots", base.slice(0, 12)));
+  assert.equal(fs.readFileSync(path.join(copy.snapshot, "app.txt"), "utf8"), "baseline\n");
+  assert.deepEqual(copy.linked_node_modules, ["node_modules"]);
+  assert.equal(fs.realpathSync(path.join(copy.snapshot, "node_modules")), fs.realpathSync(dependencies));
+  assert.equal(git("worktree", "list", "--porcelain"), worktreesBefore);
+  assert.equal(git("for-each-ref"), refsBefore);
+  helper(["snapshot", "--run", run, "--sha", base], /already exists; reuse/);
+  helper(["snapshot", "--run", run, "--sha", base, "--label", "../up"], /--label/);
+  const labelled = JSON.parse(helper(["snapshot", "--run", run, "--sha", base, "--label", "review-02"]));
+  assert.equal(path.basename(labelled.snapshot), `${base.slice(0, 12)}-review-02`);
+  fs.rmSync(dependencies, { recursive: true });
   fs.writeFileSync(path.join(run, "build-01.md"), `Candidate: ${candidate}\nAC-1 evidence: app.txt contains implemented.\n`);
   update({ stage: "reviewing", candidate_sha: candidate, latest_build: "build-01.md" });
   update({ stage: "shipping" }, /passing review/);
@@ -218,6 +238,13 @@ try {
   assert.match(fs.readFileSync(path.join(assets, "dispatch.md"), "utf8"), /FULL_OR_REPAIR_OR_LIGHT/);
   assert.match(fs.readFileSync(path.join(assets, "task.md"), "utf8"), /Checks CI runs on the PR head/);
   assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-workflow/references/coordinator.md"), "utf8"), /## Pace the run/);
+  // Friction fixes from the shared-lists run: case families, CI wait,
+  // snapshots, shared exploration scripts.
+  assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-workflow/references/coordinator.md"), "utf8"), /factory-ci\.mjs wait/);
+  assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-review/SKILL.md"), "utf8"), /## Sweep the case family/);
+  assert.match(fs.readFileSync(path.join(assets, "dispatch.md"), "utf8"), /Case family to cover/);
+  assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-workflow/references/run-contract.md"), "utf8"), /## Earlier candidates/);
+  assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-workflow/references/run-contract.md"), "utf8"), /## Exploration scripts/);
   checks++;
 
   // Exercise the real installer with an isolated homedir implementation, never

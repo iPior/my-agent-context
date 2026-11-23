@@ -51,7 +51,8 @@ not assume a child inherits loaded skills or the parent's conversation.
    coordinator contract's "Pace the run" describes. Resume
    the builder or start a replacement to address findings; run a new independent
    review on each changed candidate. Route approved candidates to `factory-ship`.
-6. Inspect actual CI results for the current PR head. Route code failures through
+6. Inspect actual CI results for the current PR head, waiting with the
+   bundled `scripts/factory-ci.mjs` in the background (see "Pace the run"). Route code failures through
    build and review again, updating the existing PR. Classify infrastructure,
    credential, and unavailable-check failures separately from code defects.
 7. Present the PR, evidence, outstanding decisions, the run's cost per stage

@@ -40,8 +40,9 @@ against the project's config files rather than guessed.
 - Run one test or scenario: {{TARGETED_TEST_COMMANDS_AND_FILTER_SYNTAX}}
 - Start the application for exploration: {{SERVER_COMMANDS_CWD_PORTS_AND_REQUIRED_ENV}}
 - Sign in without the user: {{FIXTURE_IDENTITIES_OR_TEST_SESSION_METHOD_OR_NOT_APPLICABLE}}
+- Exploration scripts outside the project: {{BROWSER_LIBRARY_IMPORT_PATH_PORT_OVERRIDES_FRESH_DATA_PER_SCENARIO_E2E_DATA_SHARING_OR_NOT_APPLICABLE}}
 - Offline commands that still need variables: {{PLACEHOLDER_VARIABLES_OR_NONE}}
-- CI checks to expect on the PR head, including ones that start late: {{CHECK_NAMES_AND_ORDER}}
+- CI checks to expect on the PR head, including ones that start late: {{CHECK_NAMES_ORDER_AND_COUNT}}
 
 ## Verification plan
 
