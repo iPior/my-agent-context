@@ -40,7 +40,9 @@ replace when it cannot reach the outcome; prescribe a structure only after
 verifying that it works. Tell workers to claim only what they measured.
 
 Copy the task's setup notes, "Run it by hand" commands, and standing rules into
-every dispatch. Harnesses may inject their own defaults, such as attribution or
+every dispatch. Name the run's `explore/` directory in every builder and
+reviewer dispatch, so each round extends the last round's exploration scripts
+instead of writing new ones. Harnesses may inject their own defaults, such as attribution or
 co-author lines, into a worker's context; a worker that never saw the user's
 rule will follow the default. State that the user's rules win.
 
@@ -71,8 +73,12 @@ Keep the independent evidence and cut the duplication.
   for planning, the initial build, and every review: those decide what the
   factory catches. Use a fast model (for example Claude Sonnet) for shipping,
   and for a first repair whose findings are small and specific and touch no
-  authorization, data or schema. Choose by difficulty, not size: a repair that
-  replaces an approach that already failed goes to the strongest model. Write
+  authorization, data or schema. Choose by difficulty, not size. These go to
+  the strongest model however small they look: a repair that replaces an
+  approach that already failed; a repair of stateful UI logic (focus,
+  background refresh, optimistic or pending state, anything that runs in an
+  effect after the data changes) or of concurrency and locking; and any repair
+  in an area where an earlier repair of the run caused a regression. Write
   fast-model dispatches so they can be followed without inference. Record each
   dispatch's model, tokens and duration in the run's ledger as it returns.
 - **Each check runs once per owner.** The builder runs the full suite once on
@@ -89,11 +95,23 @@ Keep the independent evidence and cut the duplication.
   the handoff.
 - **Nobody sits waiting on CI.** The shipper pushes, updates the PR, confirms
   the checks registered on the pushed head, and returns `waiting_ci`. The
-  coordinator records that stage, then waits with a bounded background command
-  or monitor from the harness, never a foreground sleep or an idle worker.
-  When the checks finish, it confirms they ran on the head SHA, saves their
-  states to `evidence/coordinator-ci-NN.log`, records `ci_status`, and marks
-  ready_for_human or routes the failure like any other.
+  coordinator records that stage, then runs the bundled CI wait in the
+  background, never a foreground sleep, a hand-written polling loop or an idle
+  worker:
+
+  ```sh
+  node <workflow-skill>/scripts/factory-ci.mjs wait --repo <owner/name> --sha <head-sha> \
+    --expect <number of checks from the task> --log <run-dir>/evidence/coordinator-ci-NN.log
+  ```
+
+  It reads the check runs of that exact SHA, waits until the expected number
+  exist (a job that starts after another is not registered at push time),
+  saves their states to the log, and exits 0 when all passed, 1 when one
+  failed, and 2 when still pending at its timeout (run it again). Record
+  `ci_status`, then update the PR body's "CI on this head" line, which the
+  shipper had to leave pending, and its run cost with the shipping dispatch
+  included. If `gh pr edit` fails, use the REST fallback in the ship skill.
+  Then mark ready_for_human or route the failure like any other.
 
 ## Real-browser verification
 
@@ -116,7 +134,19 @@ the whole finding as the reviewer wrote it; name any excluded part explicitly.
 Reviewers mark findings blocking or nonblocking. A pass may carry nonblocking
 findings. Triage them yourself, then tell the user your recommendation for each
 (fix in one batched repair round, or list as a follow-up) and act on their
-answer; never defer or repair them silently. Put all nonblocking findings you
+answer; never defer or repair them silently. Recommend the batched fix by
+default for findings that are cheap and well understood; recommend a follow-up
+only for a reason you can name, such as a planned rework or real risk to
+resolved behavior. When the round budget is used up, offer one more bounded
+round as an ordinary option alongside shipping with follow-ups.
+
+Fix a family of cases once, not one case per round. A finding about state or
+focus usually has siblings: the same path reached from another row or
+control type, an empty neighbour, a neighbour that changed too, focus outside
+the area. In each repair dispatch, name the finding's case family and require
+the builder to cover the siblings with tests, not only the reported case. A
+reviewer that keeps finding new siblings of one family round after round is a
+sign the family was never named; name it before the next round. Put all nonblocking findings you
 fix from one review into a single repair round rather than one round each.
 Never defer a finding to keep a round in reserve for CI: CI repairs have their
 own budget (see "Repair and escalation"). Use what the user has said about

@@ -171,6 +171,9 @@ function initialize(args) {
   for (const name of ["task.md", "friction.md", "ledger.md"]) {
     fs.copyFileSync(path.join(SKILL, "assets", name), path.join(directory, name), fs.constants.COPYFILE_EXCL);
   }
+  // Exploration scripts shared by every worker of the run (see the run contract).
+  fs.mkdirSync(path.join(directory, "explore"), { mode: 0o700 });
+  fs.copyFileSync(path.join(SKILL, "assets", "explore.md"), path.join(directory, "explore", "README.md"), fs.constants.COPYFILE_EXCL);
   const status = {
     schema_version: 1, revision: 0, run_id: id, repo_key: repoKey, repo_path: repo,
     base_ref: base, initial_base_sha: baseSha, comparison_base_sha: baseSha,
@@ -190,6 +193,52 @@ function initialize(args) {
   const warnings = baseWarnings(repo, base, baseSha);
   for (const warning of warnings) console.error(`factory-run: warning: ${warning}`);
   process.stdout.write(`${JSON.stringify({ run_dir: directory, warnings, ...status }, null, 2)}\n`);
+}
+
+// A read-only copy of an earlier candidate for red runs and before/after
+// browser checks. git archive writes no refs, worktree records or config, so the
+// shared repository is untouched. Installed dependencies are linked from the
+// task worktree, so the copy runs without a fresh install. It lives in the run
+// directory, never in the project.
+function snapshot(args) {
+  const opts = options(args, ["--run", "--sha", "--label"]);
+  const { directory, status } = loadRun(opts.run);
+  const sha = requireValue(opts.sha, "--sha");
+  if (!SHA.test(sha)) fail("--sha must be a full SHA");
+  const worktree = status.worktree_path;
+  if (!fs.existsSync(worktree)) fail("The task worktree does not exist yet");
+  git(worktree, "cat-file", "-e", `${sha}^{commit}`);
+  // A label gives each worker its own copy to add the candidate's tests to.
+  const label = opts.label ?? null;
+  if (label !== null && !/^[a-z0-9][a-z0-9-]{0,39}$/.test(label)) fail("--label must be 1-40 lowercase letters, digits, or hyphens");
+  const destination = path.join(directory, "snapshots", label ? `${sha.slice(0, 12)}-${label}` : sha.slice(0, 12));
+  fs.mkdirSync(path.dirname(destination), { recursive: true, mode: 0o700 });
+  try { fs.mkdirSync(destination, { mode: 0o700 }); } catch (error) {
+    // Never rewrite a copy another worker may be running; reuse it instead.
+    if (error.code === "EEXIST") fail(`Snapshot already exists; reuse ${destination}`);
+    throw error;
+  }
+  const archive = execFileSync("git", ["-C", worktree, "archive", "--format=tar", sha], { maxBuffer: 1 << 30 });
+  execFileSync("tar", ["-x", "-C", destination], { input: archive, stdio: ["pipe", "ignore", "pipe"] });
+  const linked = [];
+  // node_modules directories outside other node_modules, a few levels deep:
+  // the root and each workspace package.
+  const visit = (relative, depth) => {
+    const here = path.join(worktree, relative);
+    for (const entry of fs.readdirSync(here, { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name === ".git") continue;
+      const child = path.join(relative, entry.name);
+      if (entry.name === "node_modules") {
+        const target = path.join(destination, child);
+        if (fs.existsSync(path.dirname(target)) && !fs.existsSync(target)) {
+          fs.symlinkSync(path.join(worktree, child), target, "dir");
+          linked.push(child);
+        }
+      } else if (depth < 3) visit(child, depth + 1);
+    }
+  };
+  visit("", 0);
+  process.stdout.write(`${JSON.stringify({ snapshot: destination, sha, linked_node_modules: linked.sort() }, null, 2)}\n`);
 }
 
 const MUTATION_OPTIONS = {
@@ -270,8 +319,10 @@ try {
       "             approve --run PATH --expected-revision N --note FILE\n" +
       "             update --run PATH --expected-revision N --patch FILE\n" +
       "             fallback --run PATH --expected-revision N --to SHA --review HANDOFF --note FILE\n" +
+      "             snapshot --run PATH --sha SHA [--label NAME]\n" +
       "Records only: no project edits, worktree creation, agent execution, or publication.");
   } else if (command === "init") initialize(args);
+  else if (command === "snapshot") snapshot(args);
   else if (command === "show") console.log(JSON.stringify(loadRun(options(args, ["--run"]).run).status, null, 2));
   else if (Object.prototype.hasOwnProperty.call(MUTATION_OPTIONS, command)) mutate(command, args);
   else fail(`Unknown command: ${command}`);

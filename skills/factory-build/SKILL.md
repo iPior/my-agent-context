@@ -33,9 +33,16 @@ reconstruct accepted requirements from a summary or create new run state.
    finding itself in the review handoff; it applies in full unless the dispatch
    excludes part. Reproduce each finding before fixing it, preferably with a
    failing test run against the unchanged source, one finding per test so a log
-   does not stop at the first, and save that failing run as evidence. Fix
-   supported defects and explain disagreements with evidence. Do not blindly
-   apply speculative review suggestions.
+   does not stop at the first, and save that failing run as evidence. To run
+   a test against an earlier candidate, use the status helper's `snapshot`
+   command with `--label <your handoff name>` (see "Earlier candidates" in the
+   run contract). Fix supported defects and explain disagreements with
+   evidence. Do not blindly apply speculative review suggestions.
+   Fix the finding's family, not only the reported case: when the dispatch
+   names a case family, or the finding is about state, focus or timing, list
+   the sibling cases (other row or control types on the same path, missing or
+   also-changed neighbours, focus elsewhere, repeated or late updates), test
+   each, and say in the handoff which siblings you covered.
    The dispatch's required outcome is binding; an implementation it suggests is
    not. If the suggestion cannot reach the outcome, take a route that does and
    report the deviation with the reason. For a repair of a finding that an
@@ -50,7 +57,12 @@ reconstruct accepted requirements from a summary or create new run state.
    test when the plan calls for one, run it in a real browser against the
    running application, and save screenshots or traces per criterion. A
    simulated-DOM test is not that check. The reviewer re-runs it and explores
-   separately, so say how to start the application and run the test. Start
+   separately, so say how to start the application and run the test. Keep
+   reproductions you script outside the committed tests in the run's
+   `explore/` directory, listed in its README, so later rounds can rerun them.
+   A new committed end-to-end scenario must not depend on or leave behind data
+   that other scenarios see: use names unique to the scenario or the
+   project's isolation mechanism, and run it in the full suite, not only alone. Start
    servers outside the committed test runner with the workflow's server
    helper (see the run contract) and stop them before returning.
 4. Compare before and after using the same meaningful scenario where possible.

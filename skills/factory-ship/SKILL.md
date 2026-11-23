@@ -26,6 +26,9 @@ Recheck the approved task digest. Never ship a newer unreviewed commit.
    it, behavior, verification per criterion, limits, follow-ups for deferred
    findings with their reasons, and the factory run figures the dispatch gives
    from the ledger. The PR should be the one place the user needs to read.
+   CI cannot have finished at publish time, so write the "CI on this head"
+   line as pending with the expected check names; the coordinator fills it
+   in after its CI wait.
    Publish no private logs, absolute local paths, secrets, or internal
    context. When updating an existing PR, refresh every section the new
    candidate changes, including the run figures. Follow the dispatch's standing rules for the title and

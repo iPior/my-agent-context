@@ -10,7 +10,9 @@ conversation for decisions and approval.
 
 ## Read before asking
 
-Read the run's `task.md`, `status.json`, the coordinator-supplied shared contract,
+Read the run's `task.md` (also before writing it: the helper created it, and
+some harnesses refuse to overwrite a file not read in the session),
+`status.json`, the coordinator-supplied shared contract,
 and applicable project instructions. Inspect the relevant implementation, tests,
 build commands, and repository state. If invoked without a run, return a proposed
 plan only; do not invent paths or claim a factory run exists.
@@ -30,7 +32,13 @@ syntax), how to start each server for exploration with its working directory,
 ports and required variables, the fixture identities or test-session method
 for sign-in, variables that offline commands such as code generators still
 read, and the names and order of the CI checks expected on the PR head,
-including jobs that start only after another finishes.
+including jobs that start only after another finishes, with their count for
+the CI wait. For a browser-facing task, also give what exploration scripts
+outside the project need: the absolute path to import the project's browser
+library from, the variables that move the end-to-end servers off their default
+ports, how to get fresh data per scenario (for example restarting a fixture
+server), and whether end-to-end scenarios share data across files, which
+decides how new scenarios must isolate theirs.
 
 Record the blast radius while you read the code: what a merge affects
 (components, routes, screens, users), schema and data changes with their
@@ -68,8 +76,11 @@ list each one in the task: the test, what it asserts today, what it will assert,
 and why. This is a deliberate change, not a weakened test; listing it lets the
 user approve it and lets the reviewer check exactly these. Also look for
 conflicts inside the plan itself, such as "existing codes unchanged" next to a
-new code that replaces one for some inputs. Write "none found" when the search
-finds nothing.
+new code that replaces one for some inputs. Include side effects that change
+what tests observe without changing a rule: new background requests, timers
+or polling break tests that count requests or assert that none happen, and a
+new element in the page changes tab order and element counts. Write "none
+found" when the search finds nothing.
 
 For a change users see in a browser, plan an end-to-end check in a real
 browser, headless is fine, that drives the running application through each

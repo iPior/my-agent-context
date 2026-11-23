@@ -154,8 +154,14 @@ meant to be the one thing to read: its body carries a blast radius (what a
 merge affects and how to roll it back), per-criterion verification, limits,
 follow-ups, and the run's cost per stage and per finding from the run ledger. To keep runs short, the coordinator picks a model per
 stage (strongest for planning, building and review; a fast one for shipping
-and small repairs), reviewers rely on CI instead of re-running the full suite,
-and the coordinator, not a worker, waits on CI.
+and small repairs, but never for stateful UI, concurrency, or an area that
+already regressed), reviewers rely on CI instead of re-running the full suite,
+and the coordinator, not a worker, waits on CI with the bundled
+`factory-ci.mjs`. Reviewers sweep the whole family of a state or focus defect
+and repairs cover it, so one round fixes what used to take several. Workers
+share reusable exploration scripts in the run's `explore/` directory and get
+earlier candidates for red runs from the helper's `snapshot` command instead
+of rebuilding them each round.
 
 These skills provide a session-driven workflow, not an always-running controller:
 no daemon, automatic CI wake-up, tmux/Herdr management, or cross-provider adapter
@@ -164,7 +170,8 @@ must reconcile saved records with live Git and PR state. No runtime run data
 belongs in this repository or the target project's commits.
 
 Run the local helper, packaging, and installer checks with `npm test`. This does not call a
-model, contact GitHub, install skills in your real home, or change provider config.
+model, contact GitHub (the CI wait is tested against a fake `gh`), install
+skills in your real home, or change provider config.
 
 ### [project-spec-writer](skills/project-spec-writer/)
 

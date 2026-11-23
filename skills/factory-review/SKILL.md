@@ -35,6 +35,9 @@ Do not claim independent review in the builder's own session.
 4. Record actionable, supported findings. Include severity, whether it blocks,
    file/line, observed behavior, reproduction or reasoning, expected behavior,
    and acceptance IDs. Label unverified concerns and missing evidence honestly.
+   Before writing a finding about state, focus or timing, sweep its family
+   (see "Sweep the case family") and report the siblings you found in the
+   same review.
 5. Save the assigned `review-NN.md` with a full reviewed SHA and one verdict:
    `pass`, `changes_requested`, or `blocked`. A pass requires acceptance coverage
    and no unresolved blocking findings; it is not a defect-free guarantee.
@@ -46,9 +49,13 @@ probe tests, scripts, and mutation checks outside the task worktree:
 
 - Put probe files in a scratch directory and import the project's code and test
   fixtures by absolute path, running them with the project's own test runner.
-- For mutation checks, or anything that must edit tracked files, use a
-  throwaway copy: `git worktree add --detach <scratch-path> <candidate-sha>`,
-  removed with `git worktree remove` when done. Never mutate the task worktree.
+- To run an earlier candidate (a red run of a new test, or the same browser
+  scenario before and after), use the status helper's `snapshot` command with
+  `--label <your handoff name>`; see "Earlier candidates" in the run contract.
+- For mutation checks, or anything that needs real Git operations on tracked
+  files, use a throwaway copy: `git worktree add --detach <scratch-path>
+  <candidate-sha>`, removed with `git worktree remove` when done. Never mutate
+  the task worktree.
 - Running the project's checks in the task worktree is fine. Ignored build
   outputs may change; `git status` must be clean when you finish.
 
@@ -68,6 +75,11 @@ real browser, headless is fine, against the running application:
    reload and back navigation mid-flow, long or unusual input, a narrow
    viewport, and console or network errors.
 
+Start from the run's `explore/` scripts: rerun the scenarios earlier rounds
+left there that this change could affect, and add your own scenarios to them
+rather than to a private scratch copy, listing them in its README (see
+"Exploration scripts" in the run contract).
+
 Do not rely on the builder's screenshots or on simulated-DOM tests. Use a
 disposable database and the planned sign-in method; never a development or
 production database. Keep exploratory scripts outside the task worktree.
@@ -80,6 +92,25 @@ by exploring is a finding; recommend adding it to the committed test.
 If you cannot run a browser or sign in, and the approved task does not record
 the user's acceptance of that gap, the criterion is unverified: return
 `blocked` naming the missing capability rather than `pass` with a limitation.
+
+## Sweep the case family
+
+A defect in state, focus or timing rarely comes alone. When you find one,
+list the cases that reach the same code path or the same promise before you
+write it up, and try each:
+
+- every kind of row, control or panel the path handles, not only the one you
+  saw (an edit row and a confirm row, a task row and a list entry);
+- the neighbours: none, one that changed or disappeared in the same update,
+  the first and the last item;
+- where focus or input is: in the affected element, beside it, elsewhere
+  (an add form with a draft, a dialog), nowhere;
+- timing: the update arriving mid-edit, twice quickly, or not at all.
+
+Report each failing sibling as its own finding, or as one finding that names
+every case, so a single repair can cover the family. In a re-review, sweep the
+family of each repaired finding again: a repair that fixes the reported case
+only is a partial fix.
 
 ## Decide the verdict
 
