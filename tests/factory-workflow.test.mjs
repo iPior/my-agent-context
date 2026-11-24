@@ -232,6 +232,11 @@ try {
   assert.match(fs.readFileSync(path.join(assets, "pr.md"), "utf8"), /## Factory run/);
   assert.match(fs.readFileSync(path.join(assets, "dispatch.md"), "utf8"), /Required outcome/);
   assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-workflow/references/coordinator.md"), "utf8"), /## Cap each finding/);
+  // Closing: a merged run removes its worktree, updates the main checkout and
+  // ends with the self-improvement loop.
+  assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-workflow/references/coordinator.md"), "utf8"), /## Close a merged run/);
+  assert.match(fs.readFileSync(path.join(ROOT, "skills/factory-workflow/references/coordinator.md"), "utf8"), /## Improve the factory/);
+  assert.match(fs.readFileSync(path.join(assets, "friction.md"), "utf8"), /## Proposals/);
   // Pacing: each dispatch states its model and review scope, and the task
   // records which checks CI runs so reviewers can rely on them.
   assert.match(fs.readFileSync(path.join(assets, "dispatch.md"), "utf8"), /Model and effort/);

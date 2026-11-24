@@ -255,19 +255,78 @@ unavailable check. Distinguish that exception from green CI in the final report.
 When the repository configures no required checks, every check that ran on the
 PR head must have passed, and the final report says that no check is enforced.
 After the user merges, verify the actual PR state and record the merge commit;
-squash/rebase merges need not preserve the candidate as an ancestor.
+squash/rebase merges need not preserve the candidate as an ancestor. Then
+close the run (see "Close a merged run").
 
 Before the final report, read each handoff's workflow friction section and
 summarize recurring themes in the run's `friction.md`, including your own
 coordination mistakes. Report them to the user; change skills only in their
-source repository, outside the run.
+source repository, outside the run, through "Improve the factory".
 
 The final report and the PR's "Factory run" section come from the ledger:
 each stage with its model, tokens and duration, the totals, repair rounds used
 of each limit, and the attempts and cost per finding lineage. Write "not
 reported" where the harness gave no figure; never estimate.
 
-Retain run records and the worktree by default. If cleanup is requested later,
-verify no live worker or unlanded/uncommitted work depends on the worktree and
-use ordinary Git worktree removal. Never delete the run root or use force to
-bypass a refusal. The run records must outlive worktree cleanup.
+Retain the worktree until the merge is verified; run records are always
+retained. Never delete the run root or use force to bypass a refusal. The run
+records must outlive worktree cleanup.
+
+## Close a merged run
+
+Once the user's merge is verified and recorded, close the run without asking
+again; the merge is the signal. Each step has a guard, and a failed guard
+skips only that step, with the reason reported:
+
+1. **Remove the worktree.** Confirm no worker is live, the worktree is clean,
+   and its HEAD equals the merged PR's head commit (`gh pr view --json
+   headRefOid`), so nothing unpublished is lost; a squash or rebase merge
+   need not contain it as an ancestor. Then run `git -C <repo> worktree
+   remove <worktree>`, without `--force`. A local commit past the PR head, or
+   any dirty file, means stop and report instead.
+2. **Update the main checkout.** Fetch the remote, then fast-forward the
+   user's main checkout only if it is on the default branch, has no
+   uncommitted changes, and can fast-forward: `git -C <repo> pull --ff-only
+   <remote> <default-branch>`. Never switch branches, stash, reset, merge or
+   rebase it. Otherwise leave it as it is and say how far behind it is.
+3. **Mark the run completed** with the merge commit, and report both steps.
+
+Leave the task branch, local and remote, unless the user asks to delete it.
+
+## Improve the factory
+
+The factory improves itself on purpose. Workers' friction sections and the
+run's `friction.md` are its input; a draft PR against the skills' source
+repository is its output. Every run whose PR was merged ends with this loop,
+after "Close a merged run". The user asked for it, so it needs no further
+permission, but it only ever opens a draft: the user reviews and merges.
+
+1. **Consolidate.** Make `friction.md` complete: every entry from each
+   handoff and your own, merged when they describe one issue, each with its
+   stage, an evidence pointer, and a proposal: a concrete change to a named
+   skill, reference, asset, helper or test, or "no change" with the reason
+   (for example a one-off environment problem). Read the `friction.md` of
+   earlier runs under the same repository key; an issue seen again is marked
+   as a recurrence and comes first.
+2. **Point it out.** In the closing report, list each entry with its proposal
+   and whether the draft PR addresses it.
+3. **Draft the PR** in the skills' source repository (for these skills,
+   `iPior/my-agent-context`; use the local checkout when one exists, else
+   clone it into the run directory). Fetch, then add a separate worktree on a
+   new branch `factory-improve/<task-id>` from the up-to-date default branch,
+   so the user's checkout of that repository is never switched or changed.
+   Edit only the source files, never the installed copy. Make the smallest
+   changes that resolve the actionable entries, add or adjust a test when a
+   helper changes, run the repository's tests, and commit with no agent
+   attribution. Push and open a draft PR whose body maps each entry to its
+   change or to "not changed" with the reason, names the run ID, and gives
+   the test result. Remove the worktree after the push.
+4. **Keep it publishable.** The source repository may be public. Describe
+   friction in general terms: no household data, application content,
+   personal names, private URLs, hostnames, tokens or log excerpts.
+5. **Skip when empty.** When no entry is actionable, open no PR and say so.
+   When an open improvement PR already covers an entry, reference it rather
+   than duplicating the change.
+
+Never merge the improvement PR or install its changes; the installed skills
+change only after the user merges and reinstalls.
