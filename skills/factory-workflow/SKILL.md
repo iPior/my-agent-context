@@ -62,6 +62,10 @@ not assume a child inherits loaded skills or the parent's conversation.
    fast-forward the user's main checkout to the updated remote default
    branch, under the guards in the coordinator contract's "Close a merged
    run". Report what was removed and pulled, and anything skipped and why.
+9. Improve the factory: point out the run's friction to the user and draft a
+   PR against the skills' source repository that addresses it, as the
+   coordinator contract's "Improve the factory" describes. This loop is
+   intentional; every merged run ends with it.
 
 ## Keep the coordinator small
 
@@ -69,8 +73,8 @@ Require each worker to save its handoff before returning its path and commit.
 Validate each result against the repository and the shared contract, then update
 `status.json` using the helper's revision check. Keep full logs and screenshots
 in the run's `evidence/` directory, with pointers in the handoff. Note workflow
-friction in the run's `friction.md` as it happens; do not edit the installed
-skills during a run.
+friction in the run's `friction.md` as it happens; it is the input to the
+self-improvement loop (step 9). Do not edit the installed skills during a run.
 
 Use at most three automatic repair rounds for review findings, and separately
 one for a CI code failure. Cap each finding: one attempt for a nonblocking

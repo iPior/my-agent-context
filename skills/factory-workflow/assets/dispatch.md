@@ -41,5 +41,8 @@ disposition states an exclusion. Read the finding in the review handoff.
 
 Write the handoff before returning; return its path and relevant SHA. Record
 anything in the skills, contract, or environment that slowed or confused the
-work in the handoff's workflow friction section. Do not update
-coordinator-owned status or start the next stage.
+work in the handoff's workflow friction section. That section is intentional:
+it feeds the factory's self-improvement loop, which proposes skill changes
+after the merge. Be specific (what happened, what the instructions said or
+left out, what would have helped), one item per issue, or "none". Do not
+update coordinator-owned status or start the next stage.

@@ -93,8 +93,11 @@ The factory skills let the main chat coordinate a task through an approved plan,
 an isolated build, a fresh independent review, bounded repair rounds, and a PR.
 The user retains merge authority. Once a merge is verified, the coordinator
 closes the run: it removes the task worktree and fast-forwards the main
-checkout, skipping either step when it would lose work. Ordinary coding
-requests do not start this
+checkout, skipping either step when it would lose work. Each merged run then
+ends with an intentional self-improvement loop: the run's workflow friction is
+reported with a proposed fix per item, and a draft PR to this repository makes
+the actionable changes for the user to review. Ordinary coding requests do not
+start this
 workflow, and the global instructions are unchanged.
 
 | Skill | Responsibility |
