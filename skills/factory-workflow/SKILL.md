@@ -58,6 +58,10 @@ not assume a child inherits loaded skills or the parent's conversation.
 7. Present the PR, evidence, outstanding decisions, the run's cost per stage
    and per finding from the ledger, and the friction recorded in the run. Leave merging to the user. Reconcile a user-performed merge
    before marking the run complete.
+8. Close the run once the merge is verified: remove the task worktree and
+   fast-forward the user's main checkout to the updated remote default
+   branch, under the guards in the coordinator contract's "Close a merged
+   run". Report what was removed and pulled, and anything skipped and why.
 
 ## Keep the coordinator small
 

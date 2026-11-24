@@ -91,7 +91,10 @@ Identical installed content and correct links are left alone on repeat runs.
 
 The factory skills let the main chat coordinate a task through an approved plan,
 an isolated build, a fresh independent review, bounded repair rounds, and a PR.
-The user retains merge authority. Ordinary coding requests do not start this
+The user retains merge authority. Once a merge is verified, the coordinator
+closes the run: it removes the task worktree and fast-forwards the main
+checkout, skipping either step when it would lose work. Ordinary coding
+requests do not start this
 workflow, and the global instructions are unchanged.
 
 | Skill | Responsibility |

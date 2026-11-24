@@ -255,7 +255,8 @@ unavailable check. Distinguish that exception from green CI in the final report.
 When the repository configures no required checks, every check that ran on the
 PR head must have passed, and the final report says that no check is enforced.
 After the user merges, verify the actual PR state and record the merge commit;
-squash/rebase merges need not preserve the candidate as an ancestor.
+squash/rebase merges need not preserve the candidate as an ancestor. Then
+close the run (see "Close a merged run").
 
 Before the final report, read each handoff's workflow friction section and
 summarize recurring themes in the run's `friction.md`, including your own
@@ -267,7 +268,27 @@ each stage with its model, tokens and duration, the totals, repair rounds used
 of each limit, and the attempts and cost per finding lineage. Write "not
 reported" where the harness gave no figure; never estimate.
 
-Retain run records and the worktree by default. If cleanup is requested later,
-verify no live worker or unlanded/uncommitted work depends on the worktree and
-use ordinary Git worktree removal. Never delete the run root or use force to
-bypass a refusal. The run records must outlive worktree cleanup.
+Retain the worktree until the merge is verified; run records are always
+retained. Never delete the run root or use force to bypass a refusal. The run
+records must outlive worktree cleanup.
+
+## Close a merged run
+
+Once the user's merge is verified and recorded, close the run without asking
+again; the merge is the signal. Each step has a guard, and a failed guard
+skips only that step, with the reason reported:
+
+1. **Remove the worktree.** Confirm no worker is live, the worktree is clean,
+   and its HEAD equals the merged PR's head commit (`gh pr view --json
+   headRefOid`), so nothing unpublished is lost; a squash or rebase merge
+   need not contain it as an ancestor. Then run `git -C <repo> worktree
+   remove <worktree>`, without `--force`. A local commit past the PR head, or
+   any dirty file, means stop and report instead.
+2. **Update the main checkout.** Fetch the remote, then fast-forward the
+   user's main checkout only if it is on the default branch, has no
+   uncommitted changes, and can fast-forward: `git -C <repo> pull --ff-only
+   <remote> <default-branch>`. Never switch branches, stash, reset, merge or
+   rebase it. Otherwise leave it as it is and say how far behind it is.
+3. **Mark the run completed** with the merge commit, and report both steps.
+
+Leave the task branch, local and remote, unless the user asks to delete it.
