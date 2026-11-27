@@ -40,6 +40,14 @@ rather than inferring. List the saved failing (red) runs.
 | --- | --- | --- | --- |
 | AC-1 | {{BEFORE}} | {{AFTER}} | {{EVIDENCE}} |
 
+## Existing tests changed
+
+Each existing test whose assertions changed, with a short excerpt of the old
+and new assertion and the task's reason (its "Existing tests this task
+changes" entry). A diff alone hides unchanged test names from the reviewer.
+
+{{TEST_OLD_NEW_EXCERPTS_OR_NONE}}
+
 ## Findings addressed
 
 {{FINDING_IDS_REPRODUCTION_FIXES_OR_EVIDENCE_BASED_DISAGREEMENTS}}
