@@ -33,7 +33,10 @@ reconstruct accepted requirements from a summary or create new run state.
    finding itself in the review handoff; it applies in full unless the dispatch
    excludes part. Reproduce each finding before fixing it, preferably with a
    failing test run against the unchanged source, one finding per test so a log
-   does not stop at the first, and save that failing run as evidence. To run
+   does not stop at the first, and save that failing run as evidence. Take it
+   from the final text of each test: if you change a test after its failing
+   run, run it against the unchanged source again, and count in the handoff
+   only the tests that failed in the saved run. To run
    a test against an earlier candidate, use the status helper's `snapshot`
    command with `--label <your handoff name>` (see "Earlier candidates" in the
    run contract). Fix supported defects and explain disagreements with

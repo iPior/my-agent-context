@@ -38,13 +38,19 @@ outside the project need: the absolute path to import the project's browser
 library from, the variables that move the end-to-end servers off their default
 ports, how to get fresh data per scenario (for example restarting a fixture
 server), and whether end-to-end scenarios share data across files, which
-decides how new scenarios must isolate theirs.
+decides how new scenarios must isolate theirs. Copy each command verbatim
+from a CI workflow, package script or project document and name its source.
+Mark a command you composed yourself as unverified, so the builder runs it
+first and corrects it in the handoff.
 
 Record the blast radius while you read the code: what a merge affects
 (components, routes, screens, users), schema and data changes with their
 compatibility and rollback, contracts and who consumes them, deploy order and
 steps outside the repository, how a failure would show and how to roll back,
-and what is deliberately left untouched. Mark what you verified and what you
+and what is deliberately left untouched. When the task adds a production
+setting, secret or variable, trace where the deploy path passes it through
+(deploy workflow, environment allowlists, compose files) and list each file.
+Mark what you verified and what you
 inferred. The reviewer checks it against the diff and the PR carries it.
 
 Reuse decisions already made. Ask only about uncertainty that changes what gets
