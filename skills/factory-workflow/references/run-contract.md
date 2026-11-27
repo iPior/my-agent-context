@@ -35,7 +35,9 @@ to a scratch directory outside the worktree.
   handoff empty as a probe.
 - **Hold still during checks.** Do not edit the worktree while a baseline or
   final check runs against it; such a run proves neither tree. Use a throwaway
-  detached worktree for experiments that must overlap a long check.
+  detached worktree for experiments that must overlap a long check. Do not
+  run other servers or browser sessions while a suite runs either: the extra
+  load makes timing-sensitive tests time out and the log then proves nothing.
 - **Measure before claiming.** A handoff states only what was measured, with
   the command or evidence path. Write "not measured" rather than inferring.
 - **Long checks in the background.** Start any check that can run longer than
@@ -47,7 +49,8 @@ to a scratch directory outside the worktree.
   never only a finding ID: IDs such as R3-F1 restart in every run, so a
   filter on one also matches older tests. When an ID helps, add it after the
   behavior and with the run ID, for example `"keeps focus on the next list
-  (shared-lists R3-F1)"`.
+  (shared-lists R3-F1)"`, and filter on the run ID too (`-t "shared-lists
+  R3-F1"`), since a bare `R3-F1` also matches earlier runs' tests.
 
 ## Files
 
@@ -77,10 +80,14 @@ Timestamps are when the handoff was written, not an ordering guarantee; order
 stages by status revision and SHAs.
 
 Start each evidence log with the full commit it ran against (`git rev-parse
-HEAD`) and whether the tree was clean. A log from an uncommitted tree records
-the parent commit and says so; it does not prove the final candidate. Save the
-failing run of every test written to reproduce a finding or a new behavior
-(`<handoff>-red*.log`), not only the passing one.
+HEAD`) and whether the tree was clean, and end it with the command's exit
+status (`exit: <code>`). A log without that last line was cut off, for example
+by an ended session, and proves nothing; rerun it. A log from an uncommitted
+tree records the parent commit and says so; it does not prove the final
+candidate. Save the failing run of every test written to reproduce a finding
+or a new behavior (`<handoff>-red*.log`), not only the passing one, and read
+why each one failed: a red run that fails for another reason (a typo, a
+missing fixture) proves nothing about the behavior.
 
 Use [task](../assets/task.md), [dispatch](../assets/dispatch.md),
 [baseline](../assets/baseline.md), [build](../assets/build.md),
@@ -263,6 +270,10 @@ Read status and task, check the approved digest, latest handoffs, actual worktre
 branch/HEAD and dirty state, worker liveness, and live PR/check state. A surviving
 tmux pane does not prove an agent is alive; an old success handoff does not prove
 HEAD is unchanged. Reattach or stop a known live worker before dispatching again.
+When a worker stopped partway, tell it what remains by comparing its
+dispatch's required outputs (handoff, final logs, red runs, explore reruns,
+screenshots) with what exists on disk, not from the logs alone; an output the
+dispatch asked for and the disk does not show is still to do.
 
 If external state contradicts status, record the discrepancy and reconcile it
 before advancing. Preserve initial_base_sha; change comparison_base_sha only

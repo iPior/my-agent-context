@@ -11,6 +11,10 @@ so the next round starts from the last one's scripts rather than rewriting them.
   pass the evidence prefix and server state directory as arguments.
 - When you add or change a scenario, list it below with the round that added
   it. Never delete another worker's scenario; mark it obsolete instead.
+- Before reading focus, computed style or the accessibility tree, wait for
+  the page to settle: one timer turn plus any running transitions. Keep that
+  wait in one shared helper (for example `settle()`); reads taken mid-change
+  give false failures.
 - Scripts here are run records, not project code. Never copy them into the
   project's commits.
 

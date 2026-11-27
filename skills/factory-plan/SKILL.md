@@ -41,7 +41,18 @@ server), and whether end-to-end scenarios share data across files, which
 decides how new scenarios must isolate theirs. Copy each command verbatim
 from a CI workflow, package script or project document and name its source.
 Mark a command you composed yourself as unverified, so the builder runs it
-first and corrects it in the handoff.
+first and corrects it in the handoff. When a change adds steps to user flows,
+such as an extra click before each action, note existing end-to-end tests
+that already run close to their timeout on the base, so the builder expects
+them.
+
+Check every criterion that depends on what an installed package offers (a
+theme, a component, a version feature) against the installed package before
+writing it; a criterion the dependency cannot meet becomes a scope question
+before approval, not a builder's deviation. When the work starts from material
+that is not on the base commit, such as an uncommitted prototype or mockups,
+copy it into the run's `reference/` directory and name it in the task as
+read-only reference.
 
 Record the blast radius while you read the code: what a merge affects
 (components, routes, screens, users), schema and data changes with their
