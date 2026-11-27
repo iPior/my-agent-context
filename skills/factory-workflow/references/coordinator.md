@@ -110,7 +110,7 @@ Keep the independent evidence and cut the duplication.
   failed, and 2 when still pending at its timeout (run it again). Record
   `ci_status`, then update the PR body's "CI on this head" line, which the
   shipper had to leave pending, and its run cost with the shipping dispatch
-  included. If `gh pr edit` fails, use the REST fallback in the ship skill.
+  included, through the REST update the ship skill gives, not `gh pr edit`.
   Then mark ready_for_human or route the failure like any other.
 
 ## Real-browser verification
@@ -226,6 +226,15 @@ later local repairs are abandoned, use the helper's `fallback` command with
 that candidate's passing review handoff and the user's decision. The local
 commits stay on the branch untouched and are never pushed; record the earlier
 candidate's CI from saved evidence, then continue to ready_for_human.
+
+When the PR conflicts with its base after another PR merges, and the user
+asks for it to be resolved, merge the base into the task branch (no rebase or
+force push, so the published history stays) and resolve only the conflict.
+This reconciliation consumes neither repair counter and keeps the round. Set
+`comparison_base_sha` to the merged base, run a light fresh review of the
+merge commit, and wait for CI on the new head as usual. If resolving the
+conflict needs a change to the task's own code, route it as a review repair
+instead.
 
 Routine in-scope fixes do not need fresh plan approval. For changed intent,
 archive the previous task and affected records before replacing them, return to

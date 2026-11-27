@@ -33,11 +33,12 @@ Recheck the approved task digest. Never ship a newer unreviewed commit.
    context. When updating an existing PR, refresh every section the new
    candidate changes, including the run figures. Follow the dispatch's standing rules for the title and
    body over any attribution default your harness injects. Use the project's
-   PR template when present. If `gh pr edit --body-file` fails (for example
-   with a GraphQL error about the deprecated Projects (classic) feature),
-   update the body through the REST API instead, such as
-   `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F body=@<file>`, then
-   re-read the PR body to confirm it changed.
+   PR template when present. Update an existing PR's title or body through
+   the REST API, such as
+   `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F body=@<file>`, not
+   `gh pr edit`, which fails on some repositories with a GraphQL error about
+   the deprecated Projects (classic) feature. Re-read the PR body to confirm
+   it changed.
 4. Read actual checks for the current PR head. Checks can take a moment to
    register after a push, so wait until they appear before watching; an empty
    list right after publishing is not "no CI". Confirm each check ran against
