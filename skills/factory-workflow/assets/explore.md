@@ -15,6 +15,12 @@ so the next round starts from the last one's scripts rather than rewriting them.
   the page to settle: one timer turn plus any running transitions. Keep that
   wait in one shared helper (for example `settle()`); reads taken mid-change
   give false failures.
+- Importing the browser library by absolute path from an `.mjs` script can
+  return a CommonJS module whose API sits under `default`; unwrap it once,
+  for example `const mod = await import(path); const pw = mod.default ?? mod`.
+- For before/after screenshot comparisons, emulate reduced motion (for
+  example Playwright's `reducedMotion: 'reduce'`) so animated backgrounds or
+  entrance animations do not make unchanged pages differ.
 - Scripts here are run records, not project code. Never copy them into the
   project's commits.
 

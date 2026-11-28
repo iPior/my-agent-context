@@ -42,8 +42,9 @@ Recheck the approved task digest. Never ship a newer unreviewed commit.
 4. Read actual checks for the current PR head. Checks can take a moment to
    register after a push, so wait until they appear before watching; an empty
    list right after publishing is not "no CI". Confirm each check ran against
-   the published head SHA. If a convenience command or flag is missing in the
-   installed CLI, read the same data from the run or check-run API instead.
+   the published head SHA. Read them from the check-runs API, for example
+   `gh api repos/<owner>/<repo>/commits/<sha>/check-runs`, which works on every
+   gh version; some installed versions of `gh pr checks` have no `--json`.
    Green means required checks have passed. When the repository configures no
    required checks, every check that ran must have passed, and the handoff says
    that none is enforced. Pending/missing/unreadable checks remain waiting or
